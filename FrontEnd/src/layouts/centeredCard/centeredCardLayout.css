@@ -1,0 +1,24 @@
+.centered-layout {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255, 0, 120, 0.25),
+      transparent 40%
+    ),
+
+    radial-gradient(
+      circle at bottom right,
+      rgba(120, 0, 255, 0.25),
+      transparent 40%
+    ),
+
+    #020617;
+}

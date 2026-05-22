@@ -1,0 +1,58 @@
+.logo-circle {
+  width: 74px;
+  height: 74px;
+
+  border-radius: 50%;
+
+  margin: 0 auto 30px;
+
+  background: linear-gradient(
+    180deg,
+    #ff5b8f,
+    #ff7260
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  color: white;
+  text-align: center;
+  font-size: 52px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 50px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  color: white;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-bottom: 35px;
+}
+
+.register-text {
+  text-align: center;
+  color: #9aa4c0;
+  margin-top: 40px;
+}
+
+.register-text span {
+  color: #ff4f87;
+  font-weight: 700;
+}

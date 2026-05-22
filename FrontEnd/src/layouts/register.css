@@ -1,0 +1,11 @@
+.forgot-password {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  margin-top: 20px;
+
+  color: #9aa4c0;
+}

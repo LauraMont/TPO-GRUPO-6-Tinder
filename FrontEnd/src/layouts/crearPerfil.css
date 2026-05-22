@@ -1,0 +1,247 @@
+.crear-perfil-page {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255, 0, 120, 0.25),
+      transparent 40%
+    ),
+
+    radial-gradient(
+      circle at bottom right,
+      rgba(120, 0, 255, 0.25),
+      transparent 40%
+    ),
+
+    #020617;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+
+  background: rgba(255,255,255,0.08);
+
+  border-radius: 999px;
+
+  margin-bottom: 35px;
+
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 65%;
+  height: 100%;
+
+  background: linear-gradient(
+    90deg,
+    #ff4f87,
+    #ff6d5a
+  );
+}
+
+.perfil-title {
+  color: white;
+  text-align: center;
+
+  font-size: 52px;
+
+  margin-bottom: 10px;
+}
+
+.perfil-subtitle {
+  text-align: center;
+  color: #94a3b8;
+
+  margin-bottom: 40px;
+}
+
+.section {
+  margin-bottom: 25px;
+}
+
+.section-label {
+  display: block;
+
+  color: white;
+  font-weight: 600;
+
+  margin-bottom: 12px;
+}
+
+.photos-container {
+  display: flex;
+  gap: 18px;
+}
+
+.photo-card {
+  width: 130px;
+  height: 130px;
+
+  border-radius: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  position: relative;
+
+  color: #ff4f87;
+
+  border: 2px dashed rgba(255,255,255,0.1);
+
+  background: rgba(255,255,255,0.04);
+}
+
+.photo-card.active {
+  background: linear-gradient(
+    180deg,
+    #ff4f87,
+    #ff6d5a
+  );
+
+  border: none;
+}
+
+.photo-card.empty {
+  color: #94a3b8;
+}
+
+.photo-check {
+  position: absolute;
+
+  top: -8px;
+  right: -8px;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+
+  background: #34d399;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: black;
+}
+
+.double-fields {
+  display: flex;
+  gap: 20px;
+}
+
+.double-fields .section {
+  flex: 1;
+}
+
+.select-container {
+  height: 60px;
+
+  border-radius: 18px;
+
+  background: rgba(255,255,255,0.05);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  color: white;
+}
+
+.textarea-container {
+  position: relative;
+}
+
+.textarea-container textarea {
+  width: 100%;
+  height: 120px;
+
+  resize: none;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.05);
+
+  border-radius: 20px;
+
+  padding: 20px;
+
+  outline: none;
+
+  color: white;
+
+  font-size: 16px;
+}
+
+.textarea-container textarea::placeholder {
+  color: #94a3b8;
+}
+
+.counter {
+  position: absolute;
+
+  right: 20px;
+  bottom: 15px;
+
+  color: #64748b;
+  font-size: 14px;
+}
+
+.interests-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.interest-chip {
+  padding: 12px 22px;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(255,255,255,0.1);
+
+  color: white;
+
+  background: rgba(255,255,255,0.04);
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.interest-chip.active {
+  background: rgba(139, 92, 246, 0.15);
+
+  border: 1px solid #8b5cf6;
+
+  color: #c4b5fd;
+}
+
+.interest-chip.pink {
+  background: rgba(255, 79, 135, 0.12);
+
+  border: 1px solid #ff4f87;
+
+  color: #ff9cbc;
+}
+
+.interest-chip.add {
+  border-style: dashed;
+
+  color: #94a3b8;
+}

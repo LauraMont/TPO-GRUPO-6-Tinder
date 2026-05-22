@@ -1,0 +1,11 @@
+:root {
+  --primary-pink: #ff4f87;
+  --primary-orange: #ff6d5a;
+
+  --bg-dark: #020617;
+
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+
+  --card-bg: rgba(20, 26, 55, 0.65);
+}

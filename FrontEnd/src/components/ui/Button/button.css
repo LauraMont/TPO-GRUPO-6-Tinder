@@ -1,0 +1,35 @@
+.custom-button {
+  width: 100%;
+  height: 62px;
+
+  border: none;
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  color: white;
+
+  background: linear-gradient(
+    90deg,
+    #ff4f87,
+    #ff6d5a
+  );
+
+  transition: 0.25s;
+}
+
+.custom-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.link-button {
+  text-decoration: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
