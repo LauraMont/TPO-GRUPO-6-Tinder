@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "cassandra-driver": "^4.9.0",
+    "neo4j-driver": "^6.0.1"
+  }
+}
