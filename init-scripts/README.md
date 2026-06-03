@@ -21,20 +21,23 @@ docker-compose ps
 
 ---
 
-## 2. Ejecutar el Sembrado de Datos (Seed Script)
+## 2. Ejecutar el Sembrado de Datos de MongoDB
 
-Una vez que los contenedores estén corriendo, debes inyectar los datos en Neo4j y Cassandra ejecutando el script de Node.js.
+MongoDB se inicializa automáticamente con `init-mongo.js` cuando el contenedor arranca por primera vez.
+
+Si quieres resembrar la colección manualmente, puedes ejecutar el script dentro del contenedor Mongo:
 
 ```bash
-# Instalar los drivers si aún no lo has hecho
-npm install neo4j-driver cassandra-driver
-
-# Ejecutar el script sembrador
-node seed.js
-
+docker exec -it tinderlike_mongodb mongosh -u admin -p password123 --authenticationDatabase admin
 ```
 
-*El script realizará reintentos automáticos hasta que las bases de datos estén listas para recibir la información.*
+```javascript
+use tinderlike_db;
+load('/docker-entrypoint-initdb.d/init.js');
+exit
+```
+
+*Ese script solo carga perfiles en MongoDB; no inicializa Neo4j ni Cassandra.*
 
 ---
 

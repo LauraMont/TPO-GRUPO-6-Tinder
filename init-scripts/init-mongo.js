@@ -1,5 +1,13 @@
 db = db.getSiblingDB('tinderlike_db');
 
+if (!db.getUser('testuser')) {
+  db.createUser({
+    user: 'testuser',
+    pwd: 'abc123',
+    roles: [{ role: 'readWrite', db: 'tinderlike_db' }]
+  });
+}
+
 // Limpiar la colección por si ejecutamos el script varias veces
 db.profiles.drop();
 
@@ -99,5 +107,37 @@ db.profiles.insertMany([
     bio: "Diseñadora gráfica. Me encanta probar cosas nuevas y salir de mi zona de confort.",
     interests: ["Diseño", "Aventuras", "Pintura"],
     photos: ["foto_sofia_1.jpg"]
+  },
+  {
+    userId: "a1b2c3d4-0000-0000-0000-000000000013",
+    name: "Nicolas",
+    age: 27,
+    bio: "Desarrollador backend y fanático del café fuerte. Siempre buscando el próximo proyecto.",
+    interests: ["Backend", "Café", "Arquitectura"],
+    photos: ["foto_nico_1.jpg"]
+  },
+  {
+    userId: "a1b2c3d4-0000-0000-0000-000000000014",
+    name: "Paula",
+    age: 23,
+    bio: "Estudiante de diseño y fotógrafa amateur. Me gustan los planes tranquilos y las charlas largas.",
+    interests: ["Diseño", "Fotografía", "Libros"],
+    photos: ["foto_paula_1.jpg"]
+  },
+  {
+    userId: "a1b2c3d4-0000-0000-0000-000000000015",
+    name: "Julian",
+    age: 30,
+    bio: "Ingeniero de datos, runner y amante de la tecnología. Si hay una montaña, quiero subirla.",
+    interests: ["Data", "Running", "Tecnología"],
+    photos: ["foto_julian_1.jpg"]
+  },
+  {
+    userId: "a1b2c3d4-0000-0000-0000-000000000016",
+    name: "Mara",
+    age: 26,
+    bio: "Profesora de inglés y fan de los viajes improvisados. Busco alguien con buen humor.",
+    interests: ["Viajes", "Idiomas", "Música"],
+    photos: ["foto_mara_1.jpg"]
   }
 ]);

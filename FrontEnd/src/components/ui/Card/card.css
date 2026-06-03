@@ -1,6 +1,12 @@
 .custom-card {
-  width: 500px;
+  /* Ajustado para que el contenido de 430px dentro (como .swipe-card-content)
+     no desborde: width = contenido (430) + padding izquierdo + derecho (50+50) */
+  width: 530px;
   padding: 50px;
+  /* Centrar horizontalmente la card dentro del contenedor padre */
+  margin: 0 auto;
+  /* Evitar overflow en pantallas estrechas */
+  max-width: 100%;
 
   border-radius: 40px;
 
