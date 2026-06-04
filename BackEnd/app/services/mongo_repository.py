@@ -17,12 +17,9 @@ class MongoProfileRepository:
         # Forzamos la conexión inmediatamente para fallar rápido si hay problemas
         try:
             self._client.admin.command("ping")
-            print("✅ Conexión pre-flight con MongoDB establecida con éxito.")
-        except OperationFailure as exc:
-            raise RuntimeError(f"Error crítico de autenticación en MongoDB (Revisa credenciales/authSource): {exc}") from exc
-        except ConnectionFailure as exc:
-            raise RuntimeError(f"No se pudo establecer contacto físico con MongoDB (Revisa el puerto/servicio nativo): {exc}") from exc
-            self._collection = self._client[settings.mongo_db][settings.mongo_collection]
+        except (ConnectionFailure, OperationFailure) as exc:
+            raise RuntimeError(f"Error al intentar conectar con MongoDB: {exc}") from exc
+        self._collection = self._client[settings.mongo_db][settings.mongo_collection]
 
     def close(self) -> None:
         self._client.close()

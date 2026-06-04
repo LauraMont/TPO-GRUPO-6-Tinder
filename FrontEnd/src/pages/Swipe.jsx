@@ -10,6 +10,7 @@ import {
   MapPin,
   MessageCircle,
 } from "lucide-react";
+import MatchModal from "../components/ui/MatchModal/MatchModal";
 
 const currentUser = {
   id: 'a1b2c3d4-0000-0000-0000-000000000005',
@@ -57,12 +58,16 @@ function Swipe() {
     );
   }
 
-  function SwipeStack() {
+function SwipeStack() {
     const [index, setIndex] = useState(0);
     const [profilesList, setProfilesList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [feedError, setFeedError] = useState(null);
     const [feedDiagnostics, setFeedDiagnostics] = useState(null);
+    
+    // 👇 NUEVOS ESTADOS PARA EL MATCH
+    const [showMatch, setShowMatch] = useState(false);
+    const [matchedProfile, setMatchedProfile] = useState(null);
 
     useEffect(() => {
       let mounted = true;
@@ -73,16 +78,12 @@ function Swipe() {
         try {
           const data = await swipeApi.getFeed({ debug: true });
           console.log('GET /api/discover/feed ->', data);
-          // Backend returns an object { profiles: [...] }
           const list = data?.profiles && Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data) ? data : []);
           if (mounted && list.length) {
             setProfilesList(list);
             setIndex(0);
           } else {
-            console.log('Feed empty or not an array');
-            if (mounted) {
-              setProfilesList([]);
-            }
+            if (mounted) setProfilesList([]);
           }
         } catch (err) {
           console.error('Error fetching feed:', err);
@@ -92,9 +93,7 @@ function Swipe() {
             setProfilesList([]);
           }
         } finally {
-          if (mounted) {
-            setLoading(false);
-          }
+          if (mounted) setLoading(false);
         }
       })();
       return () => { mounted = false; };
@@ -106,29 +105,48 @@ function Swipe() {
       const p = profilesList[index];
       if (!p) return handleNext();
       try {
-        const res = await swipeApi.pass(p.id);
-        console.log(`POST /api/swipe/pass/${p.id} ->`, res);
+        await swipeApi.pass(p.id);
       } catch (err) {
         console.error('pass error', err);
       }
       handleNext();
     };
 
+    // 👇 LÓGICA DE LIKE ACTUALIZADA
     const handleLike = async () => {
       const p = profilesList[index];
       if (!p) return handleNext();
       try {
         const res = await swipeApi.like(p.id);
         console.log(`POST /api/swipe/like/${p.id} ->`, res);
+        
+        // Asumimos que tu backend devuelve una bandera 'is_match'
+        if (res && res.is_match) {
+          setMatchedProfile(p);
+          setShowMatch(true);
+        } else {
+          handleNext();
+        }
       } catch (err) {
         console.error('like error', err);
+        handleNext(); 
       }
+    };
+
+    // 👇 FUNCIONES PARA CERRAR EL MODAL
+    const handleCloseMatch = () => {
+      setShowMatch(false);
+      handleNext(); // Solo avanzamos la tarjeta después de cerrar el modal
+    };
+
+    const handleGoToChat = () => {
+      setShowMatch(false);
       handleNext();
+      // Aquí puedes agregar tu navegación con React Router, ej: navigate(`/chat/${matchedProfile.id}`)
+      console.log("Redirigiendo al chat con:", matchedProfile.name);
     };
 
     const p = profilesList[index];
-
-    console.log('Rendering profile at index', index, p);
 
     if (loading) {
       return (
@@ -147,17 +165,10 @@ function Swipe() {
           <div className="swipe-card-content empty-state feed-debug-panel">
             <h3>No se pudo cargar el feed</h3>
             <p>{feedError}</p>
-
             {feedDiagnostics ? (
               <pre className="feed-debug-json">{JSON.stringify(feedDiagnostics, null, 2)}</pre>
             ) : null}
-
-            <button
-              className="retry-feed-btn"
-              onClick={() => window.location.reload()}
-            >
-              Reintentar
-            </button>
+            <button className="retry-feed-btn" onClick={() => window.location.reload()}>Reintentar</button>
           </div>
         </Card>
       );
@@ -174,7 +185,6 @@ function Swipe() {
       );
     }
 
-    // Fallback fields for different API shapes
     const photoUrl = (p.photos && p.photos[0]) || p.photo || p.avatar || p.photoUrl || '';
     const displayName = p.name || p.username || p.firstName || p.fullName || 'Usuario';
     const displayAge = p.age || p.years || '';
@@ -183,54 +193,41 @@ function Swipe() {
     const displayInterests = p.interests || p.tags || p.hobbies || [];
 
     return (
-      <Card>
-        <div className="swipe-card-content">
-          <div
-            className="card-image"
-            style={{
-              backgroundImage: `url(${photoUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
-            <div className="overlay-gradient"></div>
-
-            <div className="card-info">
-              <div className="name-row">
-                <h2>{displayName}{displayAge ? `, ${displayAge}` : ''}</h2>
-                <div className="online-dot"></div>
-              </div>
-
-              <div className="location">
-                <MapPin size={16} />
-                {displayLocation}
-              </div>
-
-              <p className="bio">{displayBio}</p>
-
-              <div className="tags">
-                {displayInterests && displayInterests.map((t, i) => (
-                  <div className="tag" key={i}>{t}</div>
-                ))}
+      <>
+        <Card>
+          {/* 👇 RENDERIZADO DEL MODAL */}
+        {showMatch && matchedProfile && (
+          <MatchModal
+            currentUser={currentUser} 
+            matchedUser={matchedProfile} 
+            onClose={handleCloseMatch}
+            onMessage={handleGoToChat}
+          />
+        )}
+          <div className="swipe-card-content">
+            <div className="card-image" style={{ backgroundImage: `url(${photoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="overlay-gradient"></div>
+              <div className="card-info">
+                <div className="name-row">
+                  <h2>{displayName}{displayAge ? `, ${displayAge}` : ''}</h2>
+                  <div className="online-dot"></div>
+                </div>
+                <div className="location"><MapPin size={16} />{displayLocation}</div>
+                <p className="bio">{displayBio}</p>
+                <div className="tags">
+                  {displayInterests && displayInterests.map((t, i) => (<div className="tag" key={i}>{t}</div>))}
+                </div>
               </div>
             </div>
+
+            <div className="actions-container">
+              <button className="action-btn dislike" onClick={handleDislike}><X size={34} /></button>
+              <button className="action-btn superlike"><Star size={28} /></button>
+              <button className="action-btn like" onClick={handleLike}><Heart size={34} /></button>
+            </div>
           </div>
-
-          <div className="actions-container">
-            <button className="action-btn dislike" onClick={handleDislike}>
-              <X size={34} />
-            </button>
-
-            <button className="action-btn superlike">
-              <Star size={28} />
-            </button>
-
-            <button className="action-btn like" onClick={handleLike}>
-              <Heart size={34} />
-            </button>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </>
     );
   }
 

@@ -64,6 +64,8 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
         debug: bool = Query(default=False),
     ) -> FeedResponse:
         try:
+            # 👇 AGREGA ESTE PRINT AQUÍ 👇
+            print(f"🚨 DEBUG FRONTEND - User ID recibido: '{user_id}'")
             profiles = repository.get_feed(user_id=user_id, limit=settings.feed_limit)
         except RuntimeError as exc:
             if debug:
@@ -110,5 +112,15 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
 
     return app
 
+from fastapi import Header
+
+def get_current_user_id(authorization: str | None = Header(default=None)) -> str:
+    # Si el front envió el header y empieza con "Bearer "
+    if authorization and authorization.startswith("Bearer "):
+        # Le quitamos la palabra "Bearer " y devolvemos solo tu ID
+        return authorization.replace("Bearer ", "")
+    
+    # Si llega hasta aquí, es porque el header no llegó
+    return "anonymous"
 
 app = create_app()

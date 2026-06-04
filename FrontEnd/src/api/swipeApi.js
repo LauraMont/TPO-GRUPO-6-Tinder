@@ -33,28 +33,56 @@ async function handleResponse(res) {
 const getFeed = async ({ debug = false } = {}) => {
   const url = new URL(`${API_BASE}/api/discover/feed`);
   if (debug) url.searchParams.set('debug', 'true');
-  const res = await fetch(url.toString());
+
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      // Simulamos que el ID es el token de sesión
+      'Authorization': `Bearer ${hardcodedUserId}` 
+    }
+  });
+
   return handleResponse(res);
 };
 
 const like = async (userId) => {
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
   const res = await fetch(`${API_BASE}/api/swipe/like/${userId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${hardcodedUserId}`
+    },
   });
   return handleResponse(res);
 };
 
 const pass = async (userId) => {
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
   const res = await fetch(`${API_BASE}/api/swipe/pass/${userId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${hardcodedUserId}`
+    },
   });
   return handleResponse(res);
 };
 
 const getMatches = async () => {
-  const res = await fetch(`${API_BASE}/api/matches`);
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+  const res = await fetch(`${API_BASE}/api/matches`, {
+    headers: {
+      'Authorization': `Bearer ${hardcodedUserId}`
+    }
+  });
   return handleResponse(res);
 };
 
