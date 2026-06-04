@@ -1,6 +1,6 @@
 # Setup Rápido: Arquitectura Políglota TPO (TinderLike)
 
-Esta guía rápida contiene los comandos esenciales para levantar la infraestructura, inicializar las bases de datos y verificar que la información se haya cargado correctamente.
+Esta guía rápida contiene los comandos esenciales para levantar la infraestructura, inicializar las bases de datos sincronizadamente y verificar que la información se haya cargado correctamente.
 
 ---
 
@@ -14,30 +14,25 @@ docker-compose up -d
 
 # (Opcional) Verificar que los 5 contenedores estén corriendo
 docker-compose ps
-
 ```
-
-*Nota: Si es la primera vez que levantas el proyecto, PostgreSQL y MongoDB se sembrarán automáticamente gracias a los volúmenes mapeados.*
 
 ---
 
-## 2. Ejecutar el Sembrado de Datos de MongoDB
+## 2. Ejecutar el Sembrado Maestro (Seed)
 
-MongoDB se inicializa automáticamente con `init-mongo.js` cuando el contenedor arranca por primera vez.
+Para garantizar la integridad referencial (los mismos UUIDs) en PostgreSQL, MongoDB y Neo4j, utilizamos un script maestro de Python que limpia e inicializa todo el entorno en un solo paso.
 
-Si quieres resembrar la colección manualmente, puedes ejecutar el script dentro del contenedor Mongo:
-
+**Prerrequisitos:** Asegúrate de tener las librerías necesarias en tu entorno virtual:
 ```bash
-docker exec -it tinderlike_mongodb mongosh -u admin -p password123 --authenticationDatabase admin
+pip install psycopg2-binary pymongo neo4j
 ```
 
-```javascript
-use tinderlike_db;
-load('/docker-entrypoint-initdb.d/init.js');
-exit
+**Ejecutar el script:**
+Desde la raíz de tu proyecto backend, ejecuta:
+```bash
+python seed.py
 ```
-
-*Ese script solo carga perfiles en MongoDB; no inicializa Neo4j ni Cassandra.*
+*Este script borrará los datos antiguos y sembrará los 16 perfiles de prueba con URLs de imágenes públicas, intereses y un historial de Likes abierto.*
 
 ---
 
@@ -49,55 +44,50 @@ Utiliza los siguientes comandos en tu terminal para entrar a cada contenedor y v
 
 ```bash
 docker exec -it tinderlike_postgres psql -U admin -d tinderlike_auth
-
 ```
 
 ```sql
 SELECT id, name, email FROM users;
 \q
-
 ```
 
-### MongoDB (Perfiles y Chats)
+### MongoDB (Perfiles y Fotos)
 
 ```bash
 docker exec -it tinderlike_mongodb mongosh -u admin -p password123 --authenticationDatabase admin
-
 ```
 
 ```javascript
-use tinderlike_db;
+use flame_db; // O el nombre que estés usando (ej. tinderlike_db)
 db.profiles.find().pretty();
 exit
-
 ```
 
-### Neo4j (Grafo Social)
+### Neo4j (Grafo Social e Intereses)
 
 ```bash
 docker exec -it tinderlike_neo4j cypher-shell -u neo4j -p password123
-
 ```
 
 ```cypher
-MATCH (u:User) RETURN u.userId, u.name;
-MATCH (u1)-[r]->(u2) RETURN u1.name, type(r), u2.name;
-:exit
+// Verificar los usuarios
+MATCH (u:Usuario) RETURN u.id, u.nombre;
 
+// Verificar las relaciones de intereses y likes
+MATCH (n1)-[r]->(n2) RETURN n1.nombre, type(r), n2.nombre LIMIT 20;
+:exit
 ```
 
 ### Cassandra (Logs e Historial)
 
 ```bash
 docker exec -it tinderlike_cassandra cqlsh
-
 ```
 
 ```cql
 USE tinderlike;
 SELECT * FROM swipe_history;
 EXIT;
-
 ```
 
 ### Redis (Caché y Sesiones)
@@ -106,11 +96,10 @@ EXIT;
 
 ```bash
 docker exec -it tinderlike_redis redis-cli
-
 ```
 
 ```bash
 KEYS *
 exit
-
 ```
+
