@@ -6,11 +6,11 @@ import swipeApi from "../api/swipeApi";
 import {
   Heart,
   X,
-  Star,
   MapPin,
   MessageCircle,
 } from "lucide-react";
 import MatchModal from "../components/ui/MatchModal/MatchModal";
+import BottomNav from "../components/ui/BottomNav/BottomNav";
 
 const currentUser = {
   id: 'a1b2c3d4-0000-0000-0000-000000000005',
@@ -195,7 +195,6 @@ function SwipeStack() {
     return (
       <>
         <Card>
-          {/* 👇 RENDERIZADO DEL MODAL */}
         {showMatch && matchedProfile && (
           <MatchModal
             currentUser={currentUser} 
@@ -204,7 +203,7 @@ function SwipeStack() {
             onMessage={handleGoToChat}
           />
         )}
-          <div className="swipe-card-content">
+          <div className="swipe-card-content" style={{ margin: '0 auto 60px auto' }}>
             <div className="card-image" style={{ backgroundImage: `url(${photoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
               <div className="overlay-gradient"></div>
               <div className="card-info">
@@ -220,12 +219,13 @@ function SwipeStack() {
               </div>
             </div>
 
-            <div className="actions-container">
+            <div className="actions-container" style={{ bottom: 'auto', display: 'flex', justifyContent: 'space-evenly', width: '100%', margin: '15px 0' }}>
               <button className="action-btn dislike" onClick={handleDislike}><X size={34} /></button>
-              <button className="action-btn superlike"><Star size={28} /></button>
               <button className="action-btn like" onClick={handleLike}><Heart size={34} /></button>
             </div>
+
           </div>
+              <BottomNav activeTab="swipe" onTabChange={(tab) => console.log('Cambiar a tab:', tab)} />
         </Card>
       </>
     );

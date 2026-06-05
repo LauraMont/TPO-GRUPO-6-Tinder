@@ -13,13 +13,22 @@ except ImportError:
 # ==========================================
 # CONFIGURACIONES DE CONEXIÓN
 # ==========================================
-PG_URI = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/flame_db")
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-MONGO_DB_NAME = "flame_db"
-MONGO_COLLECTION = "profiles"
+
+# 1. PostgreSQL (Autenticación)
+# Usando admin / password123 / puerto 5432 / db: tinderlike_auth
+PG_URI = os.getenv("DATABASE_URL", "postgresql://admin:password123@localhost:5432/tinderlike_auth")
+
+# 2. MongoDB (Perfiles)
+# Usando admin / password123 / puerto 27018 / db: tinderlike_db
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password123@localhost:27018/?authSource=admin")
+MONGO_DB_NAME = "tinderlike_db"
+MONGO_COLLECTION = "profiles" # Corregido para que guarde en la colección correcta
+
+# 3. Neo4j (Grafo Social)
+# Usando neo4j / password123 / puerto 7687
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
 
 # ==========================================
 # ESTRUCTURAS DE DATOS COMPARTIDAS
@@ -62,11 +71,12 @@ MONGO_PROFILES_DATA = [
     {"userId": "a1b2c3d4-0000-0000-0000-000000000016", "name": "Mara", "age": 26, "bio": "Profesora de inglés y fan de los viajes improvisados. Busco alguien con buen humor.", "interests": ["Viajes", "Idiomas", "Música"], "photos": ["https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=600&q=80"]}
 ]
 
-NEO4J_CYPHER_SEED = """
-// 1. Limpieza total de Neo4j
-MATCH (n) DETACH DELETE n;
+# 1. Query para limpiar la base de datos
+NEO4J_DELETE_QUERY = "MATCH (n) DETACH DELETE n"
 
-// 2. Creación de nodos de Usuario
+# 2. Query única y masiva para crear todo (sin puntos y comas ni WITH intermedios)
+NEO4J_CREATE_QUERY = """
+// --- NODOS DE USUARIO ---
 MERGE (u1:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000001'}) SET u1.nombre = 'Miguel', u1.edad = 26
 MERGE (u2:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000002'}) SET u2.nombre = 'Federico', u2.edad = 25
 MERGE (u3:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000003'}) SET u3.nombre = 'Santiago', u3.edad = 24
@@ -82,9 +92,9 @@ MERGE (u12:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000012'}) SET u12.nombre 
 MERGE (u13:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000013'}) SET u13.nombre = 'Nicolas', u13.edad = 27
 MERGE (u14:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000014'}) SET u14.nombre = 'Paula', u14.edad = 23
 MERGE (u15:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000015'}) SET u15.nombre = 'Julian', u15.edad = 30
-MERGE (u16:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000016'}) SET u16.nombre = 'Mara', u16.edad = 26;
+MERGE (u16:Usuario {id: 'a1b2c3d4-0000-0000-0000-000000000016'}) SET u16.nombre = 'Mara', u16.edad = 26
 
-// 3. Creación de nodos de Interés
+// --- NODOS DE INTERÉS ---
 MERGE (i1:Interes {nombre: 'PostgreSQL'})
 MERGE (i2:Interes {nombre: 'Ciberseguridad'})
 MERGE (i3:Interes {nombre: 'Tecnología'})
@@ -121,10 +131,9 @@ MERGE (i33:Interes {nombre: 'Backend'})
 MERGE (i34:Interes {nombre: 'Libros'})
 MERGE (i35:Interes {nombre: 'Data'})
 MERGE (i36:Interes {nombre: 'Running'})
-MERGE (i37:Interes {nombre: 'Idiomas'});
+MERGE (i37:Interes {nombre: 'Idiomas'})
 
-// 4. Relaciones de Intereses
-WITH u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15, u16, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19, i20, i21, i22, i23, i24, i25, i26, i27, i28, i29, i30, i31, i32, i33, i34, i35, i36, i37
+// --- RELACIONES DE INTERESES ---
 MERGE (u1)-[:INTERESADO_EN]->(i1) MERGE (u1)-[:INTERESADO_EN]->(i2) MERGE (u1)-[:INTERESADO_EN]->(i3) MERGE (u1)-[:INTERESADO_EN]->(i4)
 MERGE (u2)-[:INTERESADO_EN]->(i5) MERGE (u2)-[:INTERESADO_EN]->(i6) MERGE (u2)-[:INTERESADO_EN]->(i7)
 MERGE (u3)-[:INTERESADO_EN]->(i8) MERGE (u3)-[:INTERESADO_EN]->(i9) MERGE (u3)-[:INTERESADO_EN]->(i10) MERGE (u3)-[:INTERESADO_EN]->(i11)
@@ -140,10 +149,9 @@ MERGE (u12)-[:INTERESADO_EN]->(i30) MERGE (u12)-[:INTERESADO_EN]->(i31) MERGE (u
 MERGE (u13)-[:INTERESADO_EN]->(i33) MERGE (u13)-[:INTERESADO_EN]->(i4) MERGE (u13)-[:INTERESADO_EN]->(i6)
 MERGE (u14)-[:INTERESADO_EN]->(i30) MERGE (u14)-[:INTERESADO_EN]->(i13) MERGE (u14)-[:INTERESADO_EN]->(i34)
 MERGE (u15)-[:INTERESADO_EN]->(i35) MERGE (u15)-[:INTERESADO_EN]->(i36) MERGE (u15)-[:INTERESADO_EN]->(i33)
-MERGE (u16)-[:INTERESADO_EN]->(i18) MERGE (u16)-[:INTERESADO_EN]->(i37) MERGE (u16)-[:INTERESADO_EN]->(i24);
+MERGE (u16)-[:INTERESADO_EN]->(i18) MERGE (u16)-[:INTERESADO_EN]->(i37) MERGE (u16)-[:INTERESADO_EN]->(i24)
 
-// 5. Historial de Likes Unidireccionales (Sin Matches iniciales)
-WITH u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15, u16
+// --- HISTORIAL DE LIKES ---
 MERGE (u1)-[:LIKES]->(u6)
 MERGE (u2)-[:LIKES]->(u12)
 MERGE (u3)-[:LIKES]->(u7)
@@ -159,8 +167,9 @@ MERGE (u12)-[:LIKES]->(u13)
 MERGE (u13)-[:LIKES]->(u6)
 MERGE (u14)-[:LIKES]->(u1)
 MERGE (u15)-[:LIKES]->(u8)
-MERGE (u16)-[:LIKES]->(u2);
+MERGE (u16)-[:LIKES]->(u2)
 """
+
 
 
 # ==========================================
@@ -228,7 +237,11 @@ def seed_neo4j():
     try:
         with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)) as driver:
             with driver.session() as session:
-                session.run(NEO4J_CYPHER_SEED)
+                # 1. Primero limpiamos todo
+                session.run(NEO4J_DELETE_QUERY)
+                # 2. Luego ejecutamos toda la creación en una sola transacción
+                session.run(NEO4J_CREATE_QUERY)
+                
         print("✅ Neo4j inicializado. Nodos creados, intereses mapeados y Likes de prueba activos (0 Matches iniciales).")
     except Exception as e:
         print(f"❌ Error en Neo4j: {e}")

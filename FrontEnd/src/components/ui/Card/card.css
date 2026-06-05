@@ -2,7 +2,8 @@
   /* Ajustado para que el contenido de 430px dentro (como .swipe-card-content)
      no desborde: width = contenido (430) + padding izquierdo + derecho (50+50) */
   width: 530px;
-  padding: 50px;
+  padding: 50px 50px 160px 50px;
+  position: relative;
   /* Centrar horizontalmente la card dentro del contenedor padre */
   margin: 0 auto;
   /* Evitar overflow en pantallas estrechas */

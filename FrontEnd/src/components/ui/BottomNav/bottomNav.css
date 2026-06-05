@@ -1,0 +1,59 @@
+.bottom-nav-container {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  right: 25px;
+  width: auto;
+  margin: 0;
+  height: 64px;
+  background-color: #15151a; /* El color oscuro de tu mockup */
+  border-radius: 32px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.nav-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.nav-btn:active {
+  transform: scale(0.9);
+}
+
+.nav-icon {
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+/* Colores de los íconos */
+.text-inactive {
+  color: #6b7280; /* Gris apagado */
+}
+
+.text-active {
+  color: #ff6b6b; /* El color salmón/coral de tu diseño */
+}
+
+/* El círculo brillante detrás del ícono activo */
+.active-glow {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 107, 107, 0.15); /* Fondo coral translúcido */
+  border-radius: 50%;
+  z-index: 1;
+}
