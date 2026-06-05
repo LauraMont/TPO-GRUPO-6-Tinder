@@ -34,8 +34,8 @@ const getFeed = async ({ debug = false } = {}) => {
   const url = new URL(`${API_BASE}/api/discover/feed`);
   if (debug) url.searchParams.set('debug', 'true');
 
-  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
-  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000013)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000013"; 
 
   const res = await fetch(url.toString(), {
     method: 'GET',
@@ -50,8 +50,8 @@ const getFeed = async ({ debug = false } = {}) => {
 };
 
 const like = async (userId) => {
-  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
-  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000013)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000013"; 
   const res = await fetch(`${API_BASE}/api/swipe/like/${userId}`, {
     method: 'POST',
     headers: {
@@ -63,8 +63,8 @@ const like = async (userId) => {
 };
 
 const pass = async (userId) => {
-  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
-  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000013)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000013"; 
   const res = await fetch(`${API_BASE}/api/swipe/pass/${userId}`, {
     method: 'POST',
     headers: {
@@ -76,8 +76,8 @@ const pass = async (userId) => {
 };
 
 const getMatches = async () => {
-  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000005)
-  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000005"; 
+  // Hardcodeamos el ID de un usuario de prueba (ej. a1b2c3d4-0000-0000-0000-000000000013)
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000013"; 
   const res = await fetch(`${API_BASE}/api/matches`, {
     headers: {
       'Authorization': `Bearer ${hardcodedUserId}`
