@@ -4,10 +4,12 @@ import {
   Route,
 } from "react-router-dom";
 
-import Login from "../pages/Login";
+//import Login from "../pages/Login";
 import Register from "../pages/Register";
 import CrearPerfil from "../pages/CrearPerfil";
 import Swipe from "../pages/Swipe";
+import EventCreate from "../pages/EventCreate";
+import EventDashboard from "../pages/EventDashboard";
 
 function AppRouter() {
   return (
@@ -17,7 +19,12 @@ function AppRouter() {
 
         <Route
           path="/"
-          element={<Login />}
+          element={<EventDashboard />}
+        />
+
+        <Route
+          path="/register-evento"
+          element={<EventCreate />}
         />
 
         <Route
