@@ -1,0 +1,438 @@
+openapi: 3.0.0
+info:
+  title: TinderLike API - TPO Ingeniería de Datos II
+  description: API RESTful para la aplicación de citas con arquitectura de persistencia políglota (PostgreSQL, MongoDB, Neo4j, Cassandra, Redis). Incluye gestión de Eventos y Back Office.
+  version: 1.1.0
+  contact:
+    name: Equipo TPO
+servers:
+- url: http://localhost:3000/api
+  description: Servidor de Desarrollo
+tags:
+- name: 1. Autenticación y Back Office (PostgreSQL)
+  description: Gestión de usuarios, contraseñas, JWT y entidades administrativas de eventos a cargo de Miguel Zambrano.
+- name: 2. Perfiles y Contenido (MongoDB)
+  description: CRUD de perfiles, chats y almacenamiento de documentos ricos de eventos a cargo de Federico Egea.
+- name: 3. Tiempo Real (Redis)
+  description: Caché de feed, control de asistencia en vivo, geofencing y notificaciones a cargo de Santiago Paglino.
+- name: 4. Auditoría y Log Masivo (Cassandra)
+  description: Telemetría de eventos, persistencia de swipes y auditoría inmutable a cargo de Andres Mazzucco.
+- name: 5. Descubrimiento y Grafo Social (Neo4j)
+  description: Feed de recomendaciones de perfiles y descubrimiento inteligente de eventos a cargo de Laura Montaño.
+paths:
+  /auth/register:
+    post:
+      tags:
+      - 1. Autenticación y Back Office (PostgreSQL)
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/login:
+    post:
+      tags:
+      - 1. Autenticación y Back Office (PostgreSQL)
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /admin/events:
+    post:
+      tags:
+      - 1. Autenticación y Back Office (PostgreSQL)
+      summary: Back Office | Crear nuevo evento oficial
+      description: Persiste el evento base en PostgreSQL y distribuye los detalles ricos a MongoDB.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequest'
+      responses:
+        '201':
+          description: Evento creado exitosamente
+
+  /users/me:
+    get:
+      tags:
+      - 2. Perfiles y Contenido (MongoDB)
+      summary: Obtener mi perfil
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil completo del usuario
+    put:
+      tags:
+      - 2. Perfiles y Contenido (MongoDB)
+      summary: Actualizar mi perfil
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Perfil actualizado
+
+  /discover/feed:
+    get:
+      tags:
+      - 5. Descubrimiento y Grafo Social (Neo4j)
+      summary: Obtener perfiles para el Swipe
+      description: Devuelve el mazo de cartas excluyendo los ya vistos o matcheados, basado en el grafo social.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de perfiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedProfile'
+
+  /discover/events:
+    get:
+      tags:
+      - 5. Descubrimiento y Grafo Social (Neo4j)
+      summary: Recomendación inteligente de eventos
+      description: Retorna eventos recomendados basados en los intereses del usuario y la asistencia de perfiles afines.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de eventos recomendados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventRecommendation'
+
+  /swipe/like/{targetUserId}:
+    post:
+      tags:
+      - 5. Descubrimiento y Grafo Social (Neo4j)
+      - 4. Auditoría y Log Masivo (Cassandra)
+      summary: Dar 'Me Gusta'
+      description: Neo4j crea la relación LIKES y evalúa el match. Simultáneamente, Cassandra registra el evento inmutable del swipe (telemetría). Si existe match, Redis notifica y MongoDB crea el chat.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: targetUserId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Swipe registrado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isMatch:
+                    type: boolean
+                  matchId:
+                    type: string
+
+  /swipe/pass/{targetUserId}:
+    post:
+      tags:
+      - 5. Descubrimiento y Grafo Social (Neo4j)
+      - 4. Auditoría y Log Masivo (Cassandra)
+      summary: Dar 'No me gusta'
+      description: Neo4j registra el descarte temporalmente y Cassandra persiste el evento de forma masiva para el análisis de comportamiento.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: targetUserId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Pass registrado
+
+  /auditoria/swipes:
+    get:
+      tags:
+      - 4. Auditoría y Log Masivo (Cassandra)
+      summary: Back Office / Analítica | Obtener historial masivo de swipes
+      description: Consulta directa a la tabla swipes_por_usuario en Cassandra. Devuelve el registro histórico y cronológico de interacciones optimizado por Clustering Keys temporales.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: userId
+        in: query
+        description: ID del usuario para filtrar su historial (opcional)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: Cantidad de registros a devolver
+        schema:
+          type: integer
+          default: 100
+      responses:
+        '200':
+          description: Historial de interacciones masivas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SwipeLog'
+
+  /events:
+    get:
+      tags:
+      - 2. Perfiles y Contenido (MongoDB)
+      summary: Listar próximos eventos sociales
+      description: Consulta a MongoDB (eventos_detalles) aplicando filtros de indexación geoespacial.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de eventos presenciales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventDetail'
+
+  /events/{eventId}/attend:
+    post:
+      tags:
+      - 4. Auditoría y Log Masivo (Cassandra)
+      summary: Confirmar asistencia a evento
+      description: Registra la interacción masiva en Cassandra, actualiza el grafo en Neo4j y gestiona contadores en tiempo real en Redis.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Asistencia registrada
+
+  /chats:
+    get:
+      tags:
+      - 2. Perfiles y Contenido (MongoDB)
+      summary: Obtener bandeja de entrada
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de chats activos
+
+  /chats/{chatId}/messages:
+    get:
+      tags:
+      - 2. Perfiles y Contenido (MongoDB)
+      summary: Obtener historial de mensajes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: chatId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Historial paginado de mensajes
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+      - email
+      - password
+      - name
+      properties:
+        email:
+          type: string
+          example: usuario@email.com
+        password:
+          type: string
+          example: secreta123
+        name:
+          type: string
+          example: Carlos
+
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsIn...
+        userId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+
+    ProfileUpdate:
+      type: object
+      properties:
+        bio:
+          type: string
+        photos:
+          type: array
+          items:
+            type: string
+        interests:
+          type: array
+          items:
+            type: string
+
+    FeedProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        distanceKm:
+          type: integer
+        photos:
+          type: array
+          items:
+            type: string
+        interests:
+          type: array
+          items:
+            type: string
+
+    EventCreateRequest:
+      type: object
+      required:
+      - titulo
+      - descripcion
+      - fechaHora
+      - capacidadMaxima
+      - latitud
+      - longitud
+      properties:
+        titulo:
+          type: string
+          example: Sunset Speed Dating
+        descripcion:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        capacidadMaxima:
+          type: integer
+        latitud:
+          type: number
+        longitud:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+
+    EventDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        multimedia:
+          type: array
+          items:
+            type: string
+
+    EventRecommendation:
+      type: object
+      properties:
+        evento:
+          $ref: '#/components/schemas/EventDetail'
+        interesComun:
+          type: string
+        motivoRecomendacion:
+          type: string
+          example: "Basado en tu interés por 'Viajes'"
+
+    SwipeLog:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "user_123"
+        targetUserId:
+          type: string
+          example: "user_456"
+        action:
+          type: string
+          enum: [ LIKE, PASS, SUPERLIKE ]
+          example: "LIKE"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-06-05T22:45:00Z"
+        isMatch:
+          type: boolean
+          example: false
