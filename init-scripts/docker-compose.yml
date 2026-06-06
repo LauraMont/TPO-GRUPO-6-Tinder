@@ -1,0 +1,79 @@
+services:
+  # 1. Autenticación y Seguridad
+  postgres:
+    image: postgres:15-alpine
+    container_name: tinderlike_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: tinderlike_auth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Agrega esta línea: mapea tu archivo local a la carpeta de auto-ejecución
+      - ./init-scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # 2. Gestión de Perfiles y Chats
+  mongodb:
+    image: mongo:6.0
+    container_name: tinderlike_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-scripts/init-mongo.js:/docker-entrypoint-initdb.d/init.js
+
+  # 3. Tiempo Real y Caché
+  redis:
+    image: redis:7.0-alpine
+    container_name: tinderlike_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 4. Persistencia Masiva y Eventos
+  cassandra:
+    image: cassandra:4.1
+    container_name: tinderlike_cassandra
+    restart: unless-stopped
+    environment:
+      CASSANDRA_CLUSTER_NAME: TinderLikeCluster
+      # Ajuste de memoria recomendado para entornos de desarrollo local
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 100M
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+
+  # 5. Descubrimiento y Grafo Social
+  neo4j:
+    image: neo4j:5.12
+    container_name: tinderlike_neo4j
+    restart: unless-stopped
+    environment:
+      # Desactiva la necesidad de cambiar la contraseña en el primer login
+      NEO4J_AUTH: neo4j/password123
+    ports:
+      - "7474:7474" # Interfaz web (Neo4j Browser)
+      - "7687:7687" # Protocolo Bolt (para conectar la app)
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+
+# Declaración de volúmenes persistentes
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  cassandra_data:
+  neo4j_data:
+  neo4j_logs:

@@ -53,6 +53,7 @@
 
 .topbar-icons {
   display: flex;
+  align-items: center;
   gap: 14px;
 }
 
@@ -87,10 +88,21 @@
   font-weight: 700;
 }
 
+.current-user-name {
+  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
 /* CARD */
 
 .swipe-card-content {
-  width: 430px;
+  /* Hacer la tarjeta centrada dentro del contenedor padre y responsiva */
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
 }
 
 .card-image {
@@ -187,6 +199,40 @@
   backdrop-filter: blur(8px);
 
   border: 1px solid rgba(255,255,255,0.08);
+}
+
+.feed-debug-panel {
+  gap: 14px;
+}
+
+.feed-debug-json {
+  width: 100%;
+  padding: 14px;
+  margin: 0;
+
+  border-radius: 16px;
+
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.retry-feed-btn {
+  border: none;
+  cursor: pointer;
+
+  padding: 12px 18px;
+  border-radius: 999px;
+
+  background: linear-gradient(180deg, #ff4f87, #ff6d5a);
+  color: white;
+  font-weight: 700;
 }
 
 /* ACTIONS */
