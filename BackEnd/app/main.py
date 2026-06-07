@@ -9,6 +9,7 @@ from app.services.mongo_repository import MongoProfileRepository
 from app.services.neo4j_repository import Neo4jSwipeRepository
 from app.services.swipe_repository import MongoNeo4jSwipeRepository, SwipeRepository
 from app.auth.routes import router as auth_router
+from app.auth.admin_routes import router as admin_router
 
 
 def get_current_user_id(x_user_id: str | None = Header(default=None, alias="X-User-Id")) -> str:
@@ -111,6 +112,7 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
         return MatchesResponse(user_id=user_id, count=len(matches_list), matches=matches_list)
 
     app.include_router(auth_router)
+    app.include_router(admin_router)
     return app
 
 from fastapi import Header

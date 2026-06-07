@@ -3,7 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import DateTime
 from sqlalchemy.sql import func
-
+from datetime import datetime
 from .database import Base
 
 
@@ -20,6 +20,31 @@ class User(Base):
     password_hash = Column(String, nullable=False)
 
     role = Column(String, default="USER")
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+class Event(Base):
+
+    __tablename__ = "events"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    description = Column(
+        String,
+        nullable=True
+    )
 
     created_at = Column(
         DateTime(timezone=True),
