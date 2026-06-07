@@ -8,6 +8,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import CrearPerfil from "../pages/CrearPerfil";
 import Swipe from "../pages/Swipe";
+import Eventos from "../pages/Eventos"; // nueva
 
 function AppRouter() {
   return (
@@ -33,6 +34,11 @@ function AppRouter() {
         <Route
           path="/swipe"
           element={<Swipe />}
+        />
+
+        <Route
+          path="/eventos"
+          element={<Eventos />}
         />
 
       </Routes>
