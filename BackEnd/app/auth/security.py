@@ -4,12 +4,15 @@ import hashlib
 from jose import jwt
 from fastapi import Header
 from fastapi import HTTPException
+from fastapi.security import HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials
 
 from jose import JWTError
 from fastapi import Depends
 
 SECRET_KEY = "TPO_UADE_SECRET_2026"
 ALGORITHM = "HS256"
+security = HTTPBearer()
 
 
 def hash_password(password: str):
@@ -44,26 +47,10 @@ def create_access_token(data: dict):
 
 #Creación de dependencia de autenticación para proteger JWT.
 def get_current_user(
-    authorization: str | None = Header(default=None)
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    print("HEADER RECIBIDO:", authorization)
 
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Token requerido"
-        )
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Formato inválido"
-        )
-
-    token = authorization.replace(
-        "Bearer ",
-        ""
-    )
+    token = credentials.credentials
 
     try:
 

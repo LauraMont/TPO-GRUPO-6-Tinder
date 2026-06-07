@@ -21,7 +21,7 @@ router = APIRouter(
 @router.post("/events")
 def create_event(
     payload: EventCreate,
-    #admin=Depends(require_admin),
+    admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -49,6 +49,7 @@ def get_events(
 def update_event(
     event_id: int,
     payload: EventUpdate,
+    admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -75,6 +76,7 @@ def update_event(
 @router.delete("/events/{event_id}")
 def delete_event(
     event_id: int,
+    admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
 
