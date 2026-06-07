@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from typing import Any, Protocol
-
 from neo4j.exceptions import Neo4jError
 
 from app.services.mongo_repository import MongoProfileRepository
 from app.services.neo4j_repository import Neo4jSwipeRepository
+from app.services.cassandra_repository import CassandraSwipeRepository 
 
 
 class SwipeRepository(Protocol):
@@ -23,9 +23,10 @@ class SwipeRepository(Protocol):
 
 
 class MongoNeo4jSwipeRepository:
-    def __init__(self, profiles: MongoProfileRepository, graph: Neo4jSwipeRepository) -> None:
+    def __init__(self, profiles: MongoProfileRepository, graph: Neo4jSwipeRepository, cassandra_repo: CassandraSwipeRepository) -> None:
         self._profiles = profiles
         self._graph = graph
+        self._cassandra_repo = cassandra_repo 
 
     def close(self) -> None:
         close_profiles = getattr(self._profiles, "close", None)
@@ -76,12 +77,30 @@ class MongoNeo4jSwipeRepository:
     def register_like(self, user_id: str, target_user_id: str) -> dict[str, Any]:
         if self._profiles.get_profile(target_user_id) is None:
             raise ValueError("User or target user not found")
-        return self._graph.register_like(user_id=user_id, target_user_id=target_user_id)
+        
+        result = self._graph.register_like(user_id=user_id, target_user_id=target_user_id)
+        
+        try:
+            if self._cassandra_repo:
+                self._cassandra_repo.log_swipe(user_id, target_user_id, 'LIKE')
+        except Exception as exc:
+            print(f"⚠️ Error al persistir historial en Cassandra: {exc}")
+            
+        return result
 
     def register_pass(self, user_id: str, target_user_id: str) -> dict[str, Any]:
         if self._profiles.get_profile(target_user_id) is None:
             raise ValueError("User or target user not found")
-        return self._graph.register_pass(user_id=user_id, target_user_id=target_user_id)
+        
+        result = self._graph.register_pass(user_id=user_id, target_user_id=target_user_id)
+        
+        try:
+            if self._cassandra_repo:
+                self._cassandra_repo.log_swipe(user_id, target_user_id, 'DISLIKE')
+        except Exception as exc:
+            print(f"⚠️ Error al persistir historial en Cassandra: {exc}")
+            
+        return result
 
     def list_matches(self, user_id: str) -> list[dict[str, Any]]:
         match_records = self._graph.list_match_records(user_id)
@@ -97,6 +116,11 @@ class MongoNeo4jSwipeRepository:
                 continue
             matched_profiles.append({**profile, "match_created_at": record.get("match_created_at")})
         return matched_profiles
+
+    def get_user_swipe_history(self, user_id: str) -> list[dict[str, Any]]:
+        if self._cassandra_repo:
+            return self._cassandra_repo.get_history(user_id)
+        return []
 
 
 class InMemorySwipeRepository:
