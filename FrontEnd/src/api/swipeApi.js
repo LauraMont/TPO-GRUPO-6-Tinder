@@ -86,9 +86,22 @@ const getMatches = async () => {
   return handleResponse(res);
 };
 
+//  Consumir el endpoint de Cassandra desde el Front
+const getHistory = async () => {
+  const hardcodedUserId = "a1b2c3d4-0000-0000-0000-000000000013"; 
+  const res = await fetch(`${API_BASE}/api/swipe/history`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${hardcodedUserId}`
+    }
+  });
+  return handleResponse(res);
+};
+
 export default {
   getFeed,
   like,
   pass,
   getMatches,
+  getHistory,
 };
