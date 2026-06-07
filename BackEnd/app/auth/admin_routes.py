@@ -5,46 +5,41 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from .database import get_db
-from .models import Event
 from .event_schemas import (
     EventCreate,
     EventUpdate
 )
 from .security import require_admin
 
+# Importamos tu nuevo repositorio
+from app.services.postgres_repository import PostgreSQLRepository
+
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"]
 )
 
-#Creación de eventos.
+# Creación de eventos.
 @router.post("/events")
 def create_event(
     payload: EventCreate,
     admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
+    repo = PostgreSQLRepository(db)
+    return repo.create_event(title=payload.title, description=payload.description)
 
-    event = Event(
-        title=payload.title,
-        description=payload.description
-    )
 
-    db.add(event)
-    db.commit()
-    db.refresh(event)
-
-    return event
-
-#Lista de eventos
+# Lista de eventos
 @router.get("/events")
 def get_events(
     db: Session = Depends(get_db)
 ):
+    repo = PostgreSQLRepository(db)
+    return repo.get_all_events()
 
-    return db.query(Event).all()
 
-#Edición de eventos.
+# Edición de eventos.
 @router.put("/events/{event_id}")
 def update_event(
     event_id: int,
@@ -52,12 +47,9 @@ def update_event(
     admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
+    repo = PostgreSQLRepository(db)
 
-    event = (
-        db.query(Event)
-        .filter(Event.id == event_id)
-        .first()
-    )
+    event = repo.get_event_by_id(event_id)
 
     if not event:
         raise HTTPException(
@@ -68,23 +60,21 @@ def update_event(
     event.title = payload.title
     event.description = payload.description
 
-    db.commit()
+    repo.save_changes()
 
     return event
 
-#Eliminación de evento.
+
+# Eliminación de evento.
 @router.delete("/events/{event_id}")
 def delete_event(
     event_id: int,
     admin=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
+    repo = PostgreSQLRepository(db)
 
-    event = (
-        db.query(Event)
-        .filter(Event.id == event_id)
-        .first()
-    )
+    event = repo.get_event_by_id(event_id)
 
     if not event:
         raise HTTPException(
@@ -92,10 +82,8 @@ def delete_event(
             detail="Evento no encontrado"
         )
 
-    db.delete(event)
-    db.commit()
+    repo.delete_event(event)
 
     return {
-        "message": "Evento eliminado"
+        "message": "Evento eliminado correctamente"
     }
-

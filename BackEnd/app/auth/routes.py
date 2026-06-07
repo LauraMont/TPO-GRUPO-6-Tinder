@@ -4,9 +4,8 @@ from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 
-#Register --> Registro.
+# Register --> Registro.
 from .database import get_db
-from .models import User
 from .schemas import (
     UserRegister,
     UserLogin,
@@ -19,6 +18,9 @@ from .security import (
     create_access_token
 )
 
+# Importamos tu nuevo repositorio
+from app.services.postgres_repository import PostgreSQLRepository
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
@@ -29,12 +31,10 @@ def register(
     payload: UserRegister,
     db: Session = Depends(get_db)
 ):
+    # Instanciamos el repositorio pasándole la sesión db
+    repo = PostgreSQLRepository(db)
 
-    existing = (
-        db.query(User)
-        .filter(User.email == payload.email)
-        .first()
-    )
+    existing = repo.get_user_by_email(payload.email)
 
     if existing:
         raise HTTPException(
@@ -42,23 +42,18 @@ def register(
             detail="Email ya registrado"
         )
 
-    user = User(
+    repo.create_user(
         name=payload.name,
         email=payload.email,
-        password_hash=hash_password(
-            payload.password
-        ),
-        role="USER"
+        password_hash=hash_password(payload.password)
     )
-
-    db.add(user)
-    db.commit()
 
     return {
         "message": "Usuario creado"
     }
 
-#Login.
+
+# Login.
 @router.post(
     "/login",
     response_model=TokenResponse
@@ -67,12 +62,10 @@ def login(
     payload: UserLogin,
     db: Session = Depends(get_db)
 ):
+    # Instanciamos el repositorio pasándole la sesión db
+    repo = PostgreSQLRepository(db)
 
-    user = (
-        db.query(User)
-        .filter(User.email == payload.email)
-        .first()
-    )
+    user = repo.get_user_by_email(payload.email)
 
     if not user:
         raise HTTPException(
@@ -89,11 +82,14 @@ def login(
             detail="Credenciales inválidas"
         )
 
-    token = create_access_token({
-        "sub": str(user.id),
-        "role": user.role
-    })
+    token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "role": user.role
+        }
+    )
 
     return {
-        "access_token": token
+        "access_token": token,
+        "token_type": "bearer"
     }
