@@ -8,6 +8,7 @@ from app.models import FeedResponse, MatchesResponse, SwipeResponse
 from app.services.mongo_repository import MongoProfileRepository
 from app.services.neo4j_repository import Neo4jSwipeRepository
 from app.services.swipe_repository import MongoNeo4jSwipeRepository, SwipeRepository
+from app.auth.routes import router as auth_router
 
 
 def get_current_user_id(x_user_id: str | None = Header(default=None, alias="X-User-Id")) -> str:
@@ -64,8 +65,7 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
         debug: bool = Query(default=False),
     ) -> FeedResponse:
         try:
-            # 👇 AGREGA ESTE PRINT AQUÍ 👇
-            print(f"🚨 DEBUG FRONTEND - User ID recibido: '{user_id}'")
+            print(f" DEBUG FRONTEND - User ID recibido: '{user_id}'")
             profiles = repository.get_feed(user_id=user_id, limit=settings.feed_limit)
         except RuntimeError as exc:
             if debug:
@@ -110,6 +110,7 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
         matches_list = repository.list_matches(user_id=user_id)
         return MatchesResponse(user_id=user_id, count=len(matches_list), matches=matches_list)
 
+    app.include_router(auth_router)
     return app
 
 from fastapi import Header
@@ -119,7 +120,7 @@ def get_current_user_id(authorization: str | None = Header(default=None)) -> str
     if authorization and authorization.startswith("Bearer "):
         # Le quitamos la palabra "Bearer " y devolvemos solo tu ID
         return authorization.replace("Bearer ", "")
-    
+
     # Si llega hasta aquí, es porque el header no llegó
     return "anonymous"
 
