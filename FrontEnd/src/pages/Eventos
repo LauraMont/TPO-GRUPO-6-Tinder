@@ -1,0 +1,70 @@
+import React, { useEffect, useState } from 'react';
+import swipeApi from '../api/swipeApi'; // Importamos el objeto por defecto
+
+const Eventos = () => {
+    const [historial, setHistorial] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        // Le pegamos a tu función de Cassandra mapeada en swipeApi
+        swipeApi.getHistory()
+            .then(data => {
+                // Como tu backend devuelve {"usuario_id": ..., "historial": [...]}, guardamos la lista
+                setHistorial(data.historial || []);
+                setCargando(false);
+            })
+            .catch(err => {
+                console.error("Error al cargar el historial:", err);
+                setError("No se pudo cargar el historial de eventos.");
+                setCargando(false);
+            });
+    }, []);
+
+    if (cargando) {
+        return <div style={{ padding: '20px', color: 'white', textAlign: 'center' }}>Cargando eventos de Cassandra...</div>;
+    }
+
+    if (error) {
+        return <div style={{ padding: '20px', color: '#ef4444', textAlign: 'center' }}>{error}</div>;
+    }
+
+    return (
+        <div style={{ padding: '20px', color: 'white', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+            <h2 style={{ borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '20px' }}>
+                Historial de Actividad (Cassandra)
+            </h2>
+            
+            {historial.length === 0 ? (
+                <p style={{ color: '#aaa', textAlign: 'center' }}>Todavía no registrás interacciones en la app.</p>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {historial.map((item, index) => (
+                        <div key={index} style={{
+                            background: '#1a1a1a',
+                            padding: '15px',
+                            borderRadius: '8px',
+                            borderLeft: item.tipo === 'LIKE' ? '4px solid #22c55e' : '4px solid #ef4444',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        }}>
+                            <div>
+                                <p style={{ margin: 0, fontSize: '15px', color: '#fff' }}>
+                                    {item.tipo === 'LIKE' ? '❤️ Le diste Like a: ' : '❌ Pasaste de: '} 
+                                    <strong style={{ color: '#3b82f6', wordBreak: 'break-all' }}>{item.usuario_destino}</strong>
+                                </p>
+                                <span style={{ color: '#555', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                                    {item.fecha}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Eventos;
