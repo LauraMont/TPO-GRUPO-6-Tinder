@@ -10,31 +10,65 @@ export default function EventDashboard() {
 
   const filters = ['Todos', 'Activos', 'Borradores'];
 
-  // Mock de datos (Esto vendrá de tu fetch a FastAPI/MongoDB)
-  const featuredEvent = {
-    id: 1,
+  // Data completamente estructurada con los campos del formulario
+ const featuredEvent = {
+    id: '1',
     title: 'Sunset Rooftop Party',
+    category: 'Fiestas',
+    date: '2026-05-24',
+    time: '18:00',
     dateStr: 'Sáb, 24 May • 18:00 hs',
     location: 'Terraza Trade Skybar, CABA',
-    status: 'PRÓXIMO'
+    // URL pública de Unsplash con parámetros de optimización (?w=800)
+    bannerUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80',
+    status: 'PRÓXIMO',
+    // --- NUEVOS CAMPOS PARA EL DETALLE Y EL FORMULARIO ---
+    description: 'La mejor fiesta en la terraza para conectar con la comunidad. Música en vivo, tragos de autor y dinámicas de networking.',
+    expectedAttendance: 145,
+    maxCapacity: 200,
+    publishState: 'Publicado'
   };
 
   const catalogEvents = [
     {
-      id: 2,
+      id: '2',
+      title: 'Cata de Vinos a Ciegas',
+      category: 'Gastron.',
       day: '28',
       month: 'MAY',
-      title: 'Cata de Vinos a Ciegas',
-      details: 'Palermo Soho • 20:30 hs',
-      theme: 'orange' // Para el gradiente de la fecha
+      location: 'Palermo Soho, CABA',
+      // URL pública de copa de vino
+      bannerUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&q=80',
+      theme: 'orange',
+      // --- NUEVOS CAMPOS PARA EL DETALLE Y EL FORMULARIO ---
+      date: '2026-05-28',
+      time: '20:30',
+      dateStr: 'Jue, 28 May • 20:30 hs',
+      status: 'FINALIZADO',
+      description: 'Una experiencia sensorial única. Descubre aromas y sabores seleccionados por sommeliers.',
+      expectedAttendance: 48,
+      maxCapacity: 50,
+      publishState: 'Publicado'
     },
     {
-      id: 3,
+      id: '3',
+      title: 'Trekking y Mates',
+      category: 'Deportes',
       day: '02',
       month: 'JUN',
-      title: 'Trekking y Mates',
-      details: 'Reserva Ecológica • 10:00 hs',
-      theme: 'blue' // Para el gradiente de la fecha
+      location: 'Reserva Ecológica, CABA',
+      // URL pública de naturaleza
+      bannerUrl: 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?w=400&q=80',
+      theme: 'blue',
+      // --- NUEVOS CAMPOS PARA EL DETALLE Y EL FORMULARIO ---
+      date: '2026-06-02',
+      time: '10:00',
+      dateStr: 'Mar, 02 Jun • 10:00 hs',
+      status: 'PRÓXIMO',
+      description: 'Caminata al aire libre, naturaleza y una ronda de mates para compartir historias y conectar de forma genuina.',
+      expectedAttendance: 18,
+      maxCapacity: 30,
+      publishState: 'Borrador'
     }
   ];
 
@@ -52,7 +86,7 @@ export default function EventDashboard() {
         </div>
         
         {/* Botón para ir al formulario que creamos antes */}
-        <button className="add-event-btn" onClick={() => navigate('/register-evento')}>
+        <button className="add-event-btn" onClick={() => navigate('/admin/events/new')}>
           <Plus size={24} color="#ffffff" />
         </button>
       </header>
@@ -73,7 +107,18 @@ export default function EventDashboard() {
       <div className="dashboard-scroll-area">
         
         {/* Tarjeta Destacada */}
-        <div className="featured-card">
+        <div 
+          className="featured-card"
+          style={{
+            // El degradado lineal oscuro protege el texto, la foto va detrás
+            backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.1) 0%, #0d0e15 100%), url('${featuredEvent.bannerUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+          onClick={() => {
+            navigate(`/admin/events/detail/${featuredEvent.id}`, { state: { eventData: featuredEvent } 
+            })}}
+        >
           <div className="featured-badge">
             <span className="badge-dot"></span> {featuredEvent.status}
           </div>
@@ -86,7 +131,12 @@ export default function EventDashboard() {
             </p>
           </div>
 
-          <button className="edit-overlay-btn" onClick={() => console.log('Editar', featuredEvent.id)}>
+          <button 
+            className="edit-overlay-btn" 
+            onClick={(e) => 
+              {e.stopPropagation();
+              navigate(`/admin/events/edit/${featuredEvent.id}`, { state: { eventData: featuredEvent } })}}
+          >
             Editar
           </button>
         </div>
@@ -97,7 +147,9 @@ export default function EventDashboard() {
           
           <div className="catalog-list">
             {catalogEvents.map(ev => (
-              <div key={ev.id} className="catalog-item">
+              <div key={ev.id} className="catalog-item"
+              onClick={() => navigate(`/admin/events/detail/${ev.id}`, { state: { eventData: ev } })}
+              >
                 
                 {/* Bloque de Fecha */}
                 <div className={`date-block theme-${ev.theme}`}>
@@ -108,11 +160,14 @@ export default function EventDashboard() {
                 {/* Info del Evento */}
                 <div className="catalog-info">
                   <h4>{ev.title}</h4>
-                  <p><MapPin size={12} /> {ev.details}</p>
+                  <p><MapPin size={12} /> {ev.location}</p>
                 </div>
                 
                 {/* Botón de Acción */}
-                <button className="item-edit-btn" onClick={() => console.log('Editar', ev.id)}>
+                <button className="item-edit-btn" onClick={(e) =>{ 
+                  e.stopPropagation();
+                  navigate(`/admin/events/edit/${ev.id}`, { state: { eventData: ev } })
+                  }}>
                   Editar
                 </button>
 

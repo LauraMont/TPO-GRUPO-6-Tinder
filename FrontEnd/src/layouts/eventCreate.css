@@ -1,6 +1,6 @@
-/* Contenedor Principal (Recrea el fondo del mockup) */
+/* 1. Contenedor Principal Ajustado */
 .admin-screen-container {
-  min-height: 100vh;
+ min-height: 100vh;
 
   display: flex;
   justify-content: center;
@@ -24,12 +24,41 @@
     #020617;
 }
 
-/* Header */
+/* 2. Header Sólido y Fijo */
 .admin-header {
   display: flex;
   align-items: center;
   padding: 24px 24px 16px 24px;
   gap: 16px;
+  flex-shrink: 0; /* IMPIDE que el formulario empuje o aplaste el header */
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separador sutil opcional */
+}
+
+/* 3. Área de Scroll del Formulario */
+.admin-form-body {
+  flex: 1; /* Toma todo el espacio disponible entre el header y el footer */
+  overflow-y: auto; /* Habilita el scroll interno */
+  padding: 16px 24px 120px 24px; /* OJO: Los 120px de abajo aseguran que el último input no quede tapado por el botón */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Ocultar la barra de scroll por estética (opcional pero recomendado en móvil) */
+.admin-form-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* 4. Botón Fijo Inferior con Jerarquía (Z-Index) */
+.fixed-bottom-action {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 24px;
+  z-index: 10; /* Asegura que SIEMPRE esté por encima del formulario */
+  box-sizing: border-box;
 }
 
 .back-btn {
@@ -51,16 +80,6 @@
   font-size: 20px;
   font-weight: 700;
   margin: 0;
-}
-
-/* Cuerpo del Formulario */
-.admin-form-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
 }
 
 /* Sistema de Inputs */
@@ -176,16 +195,6 @@
 /* Botón Principal y Espaciado */
 .bottom-spacer {
   height: 100px; /* Asegura que el scroll pase el botón fijo */
-}
-
-.fixed-bottom-action {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 24px;
-  background: linear-gradient(0deg, #0d0e15 60%, rgba(13, 14, 21, 0) 100%);
-  box-sizing: border-box;
 }
 
 .primary-gradient-btn {

@@ -239,6 +239,7 @@
   font-size: 18px;
   font-weight: 800;
   line-height: 1;
+  color: #2e303a;
 }
 
 .date-month {
@@ -246,6 +247,7 @@
   font-weight: 700;
   opacity: 0.9;
   margin-top: 2px;
+  color: #2e303a;
 }
 
 /* Info del Item */
