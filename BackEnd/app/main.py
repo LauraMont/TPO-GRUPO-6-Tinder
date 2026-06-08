@@ -8,6 +8,8 @@ from app.models import FeedResponse, MatchesResponse, SwipeResponse
 from app.services.mongo_repository import MongoProfileRepository
 from app.services.neo4j_repository import Neo4jSwipeRepository
 from app.services.swipe_repository import MongoNeo4jSwipeRepository, SwipeRepository
+from app.services.cassandra_repository import CassandraSwipeRepository
+from app.utils.cassandra_db import get_cassandra_session
 
 
 def get_current_user_id(x_user_id: str | None = Header(default=None, alias="X-User-Id")) -> str:
@@ -24,9 +26,17 @@ def get_repository(request: Request) -> SwipeRepository:
 def create_app(repository: SwipeRepository | None = None, settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     if repository is None:
+        try:
+            cassandra_session = get_cassandra_session()
+            cassandra_repo = CassandraSwipeRepository(cassandra_session)
+            print("🚀 Conexión a Astra DB / Cassandra establecida con éxito.")
+        except Exception as e:
+            cassandra_repo = None
+            print(f"⚠️ Alerta Cassandra: No se pudo conectar a Astra DB ({e}). El historial correrá desactivado.")
         repository = MongoNeo4jSwipeRepository(
             profiles=MongoProfileRepository(settings),
             graph=Neo4jSwipeRepository(settings),
+            cassandra_repo=cassandra_repo,
         )
 
     app = FastAPI(title="Tinder Backend API", version="1.0.0")
@@ -122,5 +132,26 @@ def get_current_user_id(authorization: str | None = Header(default=None)) -> str
     
     # Si llega hasta aquí, es porque el header no llegó
     return "anonymous"
+
+@app.get("/api/swipe/history")
+    def get_swipe_history(
+        user_id: str = Depends(get_current_user_id),
+        repository: SwipeRepository = Depends(get_repository),
+    ) -> dict:
+        if user_id == "anonymous":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no autenticado")
+        
+        try:
+            get_history = getattr(repository, "get_user_swipe_history", None)
+            if callable(get_history):
+                historial = get_history(user_id)
+            else:
+                historial = []
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Cassandra failed: {exc}")
+            
+        return {"usuario_id": user_id, "historial": historial}
+
+    return app
 
 app = create_app()
