@@ -73,18 +73,40 @@ export default function EventCreate() {
     setFormData(prev => ({ ...prev, category: cat }));
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      console.log(`Enviando actualización al backend para el evento ${id}:`, formData);
-      // axios.put(`/api/events/${id}`, formData)
-    } else {
-      console.log("Creando un nuevo evento en el backend:", formData);
-      // axios.post('/api/events', formData)
-    }
     
-    // Al terminar, volvemos al dashboard
-    navigate('/admin/events'); 
+    const url = isEditing 
+      ? `http://localhost:8000/admin/events/${id}` 
+      : 'http://localhost:8000/admin/events';
+      
+    const method = isEditing ? 'PUT' : 'POST';
+
+    // Recupera tu token del localStorage o tu estado global (Context/Zustand)
+    const token = localStorage.getItem('admin_token');
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Tu token para require_admin
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || 'Error al guardar el evento');
+      }
+
+      // Redirecciona de vuelta al panel al terminar exitosamente
+      navigate('/admin/events'); 
+      
+    } catch (error) {
+      console.error("Error en la petición:", error);
+      alert("Hubo un problema: " + error.message);
+    }
   };
 
   return (

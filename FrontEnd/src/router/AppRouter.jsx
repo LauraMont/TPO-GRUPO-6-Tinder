@@ -1,8 +1,4 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 //import Login from "../pages/Login";
 import Register from "../pages/Register";
@@ -15,36 +11,21 @@ import EventDetail from "../pages/EventDetail";
 function AppRouter() {
   return (
     <BrowserRouter>
-
       <Routes>
-
-        <Route
-          path="/"
-          element={<EventDashboard />}
-        />
-
         <Route path="/admin/events" element={<EventDashboard />} />
+
         <Route path="/admin/events/new" element={<EventCreate />} />
+
         <Route path="/admin/events/edit/:id" element={<EventCreate />} />
+
         <Route path="/admin/events/detail/:id" element={<EventDetail />} />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/crear-perfil"
-          element={<CrearPerfil />}
-        />
+        <Route path="/crear-perfil" element={<CrearPerfil />} />
 
-        <Route
-          path="/swipe"
-          element={<Swipe />}
-        />
-
+        <Route path="/swipe" element={<Swipe />} />
       </Routes>
-
     </BrowserRouter>
   );
 }

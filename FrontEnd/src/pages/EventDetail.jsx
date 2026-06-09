@@ -24,6 +24,30 @@ export default function EventDetail() {
     navigate(`/admin/events/edit/${eventData.id}`, { state: { eventData } });
   };
 
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(`¿Estás seguro de eliminar "${eventData.title}"?`);
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem('admin_token');
+
+    try {
+      const response = await fetch(`http://localhost:8000/admin/events/${eventData.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Error al eliminar');
+
+      // Vuelve al dashboard si se borró con éxito
+      navigate('/admin/events');
+    } catch (error) {
+      console.error("Error eliminando:", error);
+      alert("No se pudo eliminar el evento.");
+    }
+  };
+
   return (
     <div className="admin-screen-container">
       <Card>
@@ -103,9 +127,9 @@ export default function EventDetail() {
                 <span>Duplicar</span>
                 </div>
                 
-                <div className="action-item" onClick={() => console.log('Eliminar')}>
-                <button className="action-circle danger"><Trash2 size={22} /></button>
-                <span className="danger-text">Eliminar</span>
+                <div className="action-item" onClick={handleDelete}>
+                    <button className="action-circle danger"><Trash2 size={22} /></button>
+                    <span className="danger-text">Eliminar</span>
                 </div>
 
             </div>
