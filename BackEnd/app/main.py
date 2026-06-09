@@ -67,7 +67,9 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
     ) -> FeedResponse:
         try:
             print(f" DEBUG FRONTEND - User ID recibido: '{user_id}'")
+            print("ENTRO A DISCOVER_FEED")
             profiles = repository.get_feed(user_id=user_id, limit=settings.feed_limit)
+            print("PERFILES:", profiles)
         except RuntimeError as exc:
             if debug:
                 diagnostics = getattr(repository, "diagnostics", None)

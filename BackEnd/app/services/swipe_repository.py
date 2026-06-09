@@ -9,8 +9,8 @@ from app.services.neo4j_repository import Neo4jSwipeRepository
 
 
 class SwipeRepository(Protocol):
-    def get_feed(self, user_id: str, limit: int) -> list[dict[str, Any]]:
-        ...
+    def get_feed(self, user_id: str, limit: int):
+        return self._profiles.list_profiles(limit=limit)
 
     def register_like(self, user_id: str, target_user_id: str) -> dict[str, Any]:
         ...
