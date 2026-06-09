@@ -7,6 +7,7 @@ import Swipe from "../pages/Swipe";
 import EventCreate from "../pages/EventCreate";
 import EventDashboard from "../pages/EventDashboard";
 import EventDetail from "../pages/EventDetail";
+import Login from "../pages/Login";
 
 function AppRouter() {
   return (
@@ -19,6 +20,8 @@ function AppRouter() {
         <Route path="/admin/events/edit/:id" element={<EventCreate />} />
 
         <Route path="/admin/events/detail/:id" element={<EventDetail />} />
+
+        <Route path="/" element={<Login />} />
 
         <Route path="/register" element={<Register />} />
 
