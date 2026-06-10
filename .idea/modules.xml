@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/TPO-GRUPO-6-Tinder.iml" filepath="$PROJECT_DIR$/.idea/TPO-GRUPO-6-Tinder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/tinder_final.iml" filepath="$PROJECT_DIR$/.idea/tinder_final.iml" />
     </modules>
   </component>
 </project>

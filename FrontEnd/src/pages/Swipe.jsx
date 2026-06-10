@@ -1,234 +1,215 @@
-import Card from "../components/ui/card/Card";
-import "../layouts/swipe.css";
-import { useState, useEffect } from "react";
-import swipeApi from "../api/swipeApi";
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import swipeApi from '../api/swipeApi';
+import BottomNav from '../components/ui/BottomNav/BottomNav';
+import MatchModal from '../components/ui/MatchModal/MatchModal';
+import { MapPin, Info, X, Heart } from 'lucide-react';
+import './Swipe.css';
 
-import {
-  Heart,
-  X,
-  MapPin,
-  MessageCircle,
-} from "lucide-react";
-import MatchModal from "../components/ui/MatchModal/MatchModal";
-import BottomNav from "../components/ui/BottomNav/BottomNav";
+export default function Swipe() {
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
+  const [profiles, setProfiles] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [matchedProfile, setMatchedProfile] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
-const currentUser = {
-  id: 'a1b2c3d4-0000-0000-0000-000000000005',
-  name: 'Laura',
-  initials: 'L',
-};
+  // Drag state
+  const [drag, setDrag] = useState({ active: false, startX: 0, dx: 0 });
+  const cardRef = useRef(null);
 
-function Swipe() {
+  useEffect(() => {
+    if (!token) { navigate('/'); return; }
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await swipeApi.getFeed({ debug: true });
+        const list = data?.profiles || (Array.isArray(data) ? data : []);
+        setProfiles(list);
+      } catch (err) {
+        setError(err.message || 'Error cargando perfiles');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [token]);
+
+  const currentProfile = profiles[index];
+
+  const handleLike = async () => {
+    if (!currentProfile) return;
+    try {
+      const res = await swipeApi.like(currentProfile.id || currentProfile.userId);
+      if (res?.is_match) {
+        setMatchedProfile(currentProfile);
+      } else {
+        setIndex(i => i + 1);
+      }
+    } catch { setIndex(i => i + 1); }
+  };
+
+  const handlePass = async () => {
+    if (!currentProfile) return;
+    try { await swipeApi.pass(currentProfile.id || currentProfile.userId); } catch {}
+    setIndex(i => i + 1);
+  };
+
+  const handleCloseMatch = () => { setMatchedProfile(null); setIndex(i => i + 1); };
+  const handleGoChat = () => { setMatchedProfile(null); navigate('/chats'); };
+
+  // Drag handlers
+  const onMouseDown = (e) => setDrag({ active: true, startX: e.clientX, dx: 0 });
+  const onMouseMove = (e) => {
+    if (!drag.active) return;
+    setDrag(d => ({ ...d, dx: e.clientX - d.startX }));
+  };
+  const onMouseUp = () => {
+    if (drag.dx > 80) handleLike();
+    else if (drag.dx < -80) handlePass();
+    setDrag({ active: false, startX: 0, dx: 0 });
+  };
+
+  const photoUrl = currentProfile?.photos?.[0] || currentProfile?.photo || '';
+  const displayName = currentProfile?.name || currentProfile?.username || 'Usuario';
+  const displayAge = currentProfile?.age || '';
+  const displayBio = currentProfile?.bio || currentProfile?.description || '';
+  const displayInterests = currentProfile?.interests || currentProfile?.tags || [];
+  const displayLocation = currentProfile?.location || currentProfile?.city || 'Buenos Aires';
+
+  const cardStyle = drag.active && drag.dx !== 0 ? {
+    transform: `rotate(${drag.dx * 0.04}deg) translateX(${drag.dx}px)`,
+    transition: 'none',
+  } : {};
+  const likeOpacity = drag.dx > 20 ? Math.min((drag.dx - 20) / 60, 1) : 0;
+  const passOpacity = drag.dx < -20 ? Math.min((-drag.dx - 20) / 60, 1) : 0;
+
   return (
     <div className="swipe-page">
-
-      {/* TOPBAR */}
-
-      <div className="topbar">
-
-        <h1 className="logo">
-          Flame
-        </h1>
-
-        <div className="topbar-icons">
-
-          <div className="icon-btn">
-            <MessageCircle size={22} />
-          </div>
-
-          <div className="profile-avatar">
-            {currentUser.initials}
-          </div>
-
-          <span className="current-user-name" title={currentUser.id}>
-            {currentUser.name}
-          </span>
-
-        </div>
-
+      {/* Topbar */}
+      <div className="swipe-topbar">
+        <span className="swipe-logo">TINDERLIKE</span>
+        <button className="topbar-menu" onClick={() => navigate('/perfil')}>
+          <span /><span /><span />
+        </button>
       </div>
 
-      {/* TARJETA ACTUAL (datos mock) */}
-
-      <div className="cards-stack">
-        <SwipeStack />
-      </div>
-
-    </div>
-    );
-  }
-
-function SwipeStack() {
-    const [index, setIndex] = useState(0);
-    const [profilesList, setProfilesList] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [feedError, setFeedError] = useState(null);
-    const [feedDiagnostics, setFeedDiagnostics] = useState(null);
-    
-    // 👇 NUEVOS ESTADOS PARA EL MATCH
-    const [showMatch, setShowMatch] = useState(false);
-    const [matchedProfile, setMatchedProfile] = useState(null);
-
-    useEffect(() => {
-      let mounted = true;
-      (async () => {
-        setLoading(true);
-        setFeedError(null);
-        setFeedDiagnostics(null);
-        try {
-          const data = await swipeApi.getFeed({ debug: true });
-          console.log('GET /api/discover/feed ->', data);
-          const list = data?.profiles && Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data) ? data : []);
-          if (mounted && list.length) {
-            setProfilesList(list);
-            setIndex(0);
-          } else {
-            if (mounted) setProfilesList([]);
-          }
-        } catch (err) {
-          console.error('Error fetching feed:', err);
-          if (mounted) {
-            setFeedError(err.message || 'Error cargando el feed');
-            setFeedDiagnostics(err.data?.detail || err.data || null);
-            setProfilesList([]);
-          }
-        } finally {
-          if (mounted) setLoading(false);
-        }
-      })();
-      return () => { mounted = false; };
-    }, []);
-
-    const handleNext = () => setIndex((i) => i + 1);
-
-    const handleDislike = async () => {
-      const p = profilesList[index];
-      if (!p) return handleNext();
-      try {
-        await swipeApi.pass(p.id);
-      } catch (err) {
-        console.error('pass error', err);
-      }
-      handleNext();
-    };
-
-    // 👇 LÓGICA DE LIKE ACTUALIZADA
-    const handleLike = async () => {
-      const p = profilesList[index];
-      if (!p) return handleNext();
-      try {
-        const res = await swipeApi.like(p.id);
-        console.log(`POST /api/swipe/like/${p.id} ->`, res);
-        
-        // Asumimos que tu backend devuelve una bandera 'is_match'
-        if (res && res.is_match) {
-          setMatchedProfile(p);
-          setShowMatch(true);
-        } else {
-          handleNext();
-        }
-      } catch (err) {
-        console.error('like error', err);
-        handleNext(); 
-      }
-    };
-
-    // 👇 FUNCIONES PARA CERRAR EL MODAL
-    const handleCloseMatch = () => {
-      setShowMatch(false);
-      handleNext(); // Solo avanzamos la tarjeta después de cerrar el modal
-    };
-
-    const handleGoToChat = () => {
-      setShowMatch(false);
-      handleNext();
-      // Aquí puedes agregar tu navegación con React Router, ej: navigate(`/chat/${matchedProfile.id}`)
-      console.log("Redirigiendo al chat con:", matchedProfile.name);
-    };
-
-    const p = profilesList[index];
-
-    if (loading) {
-      return (
-        <Card>
-          <div className="swipe-card-content empty-state">
-            <h3>Cargando feed</h3>
-            <p>Estamos consultando Neo4j y MongoDB para traer recomendaciones.</p>
+      {/* Content */}
+      <div className="swipe-content">
+        {loading && (
+          <div className="swipe-state">
+            <div className="state-spinner" />
+            <p>Cargando perfiles...</p>
           </div>
-        </Card>
-      );
-    }
-
-    if (feedError && profilesList.length === 0) {
-      return (
-        <Card>
-          <div className="swipe-card-content empty-state feed-debug-panel">
-            <h3>No se pudo cargar el feed</h3>
-            <p>{feedError}</p>
-            {feedDiagnostics ? (
-              <pre className="feed-debug-json">{JSON.stringify(feedDiagnostics, null, 2)}</pre>
-            ) : null}
-            <button className="retry-feed-btn" onClick={() => window.location.reload()}>Reintentar</button>
-          </div>
-        </Card>
-      );
-    }
-
-    if (!p) {
-      return (
-        <Card>
-          <div className="swipe-card-content empty-state">
-            <h3>No quedan perfiles</h3>
-            <p>Vuelve más tarde o reinicia la lista para ver más perfiles.</p>
-          </div>
-        </Card>
-      );
-    }
-
-    const photoUrl = (p.photos && p.photos[0]) || p.photo || p.avatar || p.photoUrl || '';
-    const displayName = p.name || p.username || p.firstName || p.fullName || 'Usuario';
-    const displayAge = p.age || p.years || '';
-    const displayLocation = p.location || p.city || p.region || '';
-    const displayBio = p.bio || p.description || '';
-    const displayInterests = p.interests || p.tags || p.hobbies || [];
-
-    return (
-      <>
-        <Card>
-        {showMatch && matchedProfile && (
-          <MatchModal
-            currentUser={currentUser} 
-            matchedUser={matchedProfile} 
-            onClose={handleCloseMatch}
-            onMessage={handleGoToChat}
-          />
         )}
-          <div className="swipe-card-content" style={{ margin: '0 auto 60px auto' }}>
-            <div className="card-image" style={{ backgroundImage: `url(${photoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <div className="overlay-gradient"></div>
-              <div className="card-info">
-                <div className="name-row">
-                  <h2>{displayName}{displayAge ? `, ${displayAge}` : ''}</h2>
-                  <div className="online-dot"></div>
+        {!loading && error && (
+          <div className="swipe-state">
+            <p className="state-error">{error}</p>
+            <button className="btn-retry" onClick={() => window.location.reload()}>Reintentar</button>
+          </div>
+        )}
+        {!loading && !error && !currentProfile && (
+          <div className="swipe-state">
+            <div className="state-empty-icon">🎉</div>
+            <h3>¡Ya viste todos!</h3>
+            <p>Vuelve más tarde para ver nuevos perfiles</p>
+          </div>
+        )}
+        {!loading && !error && currentProfile && (
+          <div
+            ref={cardRef}
+            className="profile-card"
+            style={cardStyle}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseUp}
+          >
+            {/* Like/Nope indicators */}
+            <div className="swipe-indicator like" style={{ opacity: likeOpacity }}>
+              <Heart fill="white" size={32} />
+              <span>LIKE</span>
+            </div>
+            <div className="swipe-indicator nope" style={{ opacity: passOpacity }}>
+              <X size={32} />
+              <span>NOPE</span>
+            </div>
+
+            {/* Photo */}
+            <div
+              className="card-photo"
+              style={{ backgroundImage: photoUrl ? `url(${photoUrl})` : 'none' }}
+            >
+              {!photoUrl && (
+                <div className="card-photo-placeholder">
+                  <span>{displayName[0]?.toUpperCase()}</span>
                 </div>
-                <div className="location"><MapPin size={16} />{displayLocation}</div>
-                <p className="bio">{displayBio}</p>
-                <div className="tags">
-                  {displayInterests && displayInterests.map((t, i) => (<div className="tag" key={i}>{t}</div>))}
+              )}
+              <div className="card-gradient" />
+            </div>
+
+            {/* Info */}
+            {!showInfo ? (
+              <div className="card-info">
+                <div className="card-name-row">
+                  <h2>{displayName}{displayAge ? `, ${displayAge}` : ''}</h2>
+                  <div className="online-dot" />
+                </div>
+                <div className="card-location">
+                  <MapPin size={14} />
+                  <span>{displayLocation}</span>
+                </div>
+                <div className="card-tags">
+                  {displayInterests.slice(0, 3).map((t, i) => (
+                    <span key={i} className="card-tag">{t}</span>
+                  ))}
+                </div>
+                <button className="info-btn" onClick={() => setShowInfo(true)}>
+                  <Info size={18} />
+                </button>
+              </div>
+            ) : (
+              <div className="card-info card-info-expanded">
+                <div className="card-name-row">
+                  <h2>{displayName}{displayAge ? `, ${displayAge}` : ''}</h2>
+                  <button className="info-btn active" onClick={() => setShowInfo(false)}>
+                    <Info size={18} />
+                  </button>
+                </div>
+                <p className="card-bio">{displayBio || 'Sin descripción'}</p>
+                <div className="card-tags">
+                  {displayInterests.map((t, i) => <span key={i} className="card-tag">{t}</span>)}
                 </div>
               </div>
-            </div>
-
-            <div className="actions-container" style={{ bottom: 'auto', display: 'flex', justifyContent: 'space-evenly', width: '100%', margin: '15px 0' }}>
-              <button className="action-btn dislike" onClick={handleDislike}><X size={34} /></button>
-              <button className="action-btn like" onClick={handleLike}><Heart size={34} /></button>
-            </div>
-
+            )}
           </div>
-              <BottomNav activeTab="swipe" onTabChange={(tab) => console.log('Cambiar a tab:', tab)} />
-        </Card>
-      </>
-    );
-  }
+        )}
+      </div>
 
-  export default Swipe;
+      {/* Action Buttons */}
+      {!loading && !error && currentProfile && (
+        <div className="swipe-actions">
+          <button className="action-btn pass" onClick={handlePass}>
+            <X size={32} strokeWidth={2.5} />
+          </button>
+          <button className="action-btn like" onClick={handleLike}>
+            <Heart size={32} fill="currentColor" />
+          </button>
+        </div>
+      )}
+
+      {matchedProfile && (
+        <MatchModal
+          currentUser={{ initials: user?.name?.[0]?.toUpperCase() || 'Y' }}
+          matchedUser={matchedProfile}
+          onClose={handleCloseMatch}
+          onMessage={handleGoChat}
+        />
+      )}
+
+      <BottomNav />
+    </div>
+  );
+}

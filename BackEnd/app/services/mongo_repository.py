@@ -44,23 +44,15 @@ class MongoProfileRepository:
             return None
         return self._normalize_profile(document)
 
-    def list_profiles(self, exclude_user_ids=None, limit=None):
-
-        query = {}
-
+    def list_profiles(self, exclude_user_ids: list[str] | set[str] | None = None, limit: int | None = None) -> list[dict[str, Any]]:
+        query: dict[str, Any] = {}
         if exclude_user_ids:
             query = {"userId": {"$nin": list(exclude_user_ids)}}
 
-        cursor = self._collection.find(query, {"_id": 0})
-
-        profiles = [
-            self._normalize_profile(document)
-            for document in cursor
-        ]
-
-        print("PERFILES ENCONTRADOS:", profiles)
-
-        return profiles
+        cursor = self._collection.find(query, {"_id": 0}).sort("last_active_at", -1)
+        if limit is not None:
+            cursor = cursor.limit(limit)
+        return [self._normalize_profile(document) for document in cursor]
 
     def list_profiles_by_ids(self, user_ids: list[str]) -> list[dict[str, Any]]:
         if not user_ids:
@@ -69,8 +61,9 @@ class MongoProfileRepository:
         documents = self._collection.find({"userId": {"$in": user_ids}}, {"_id": 0})
         profiles_by_id = {str(document.get("userId") or document.get("id")): self._normalize_profile(document) for document in documents}
         return [profiles_by_id[user_id] for user_id in user_ids if user_id in profiles_by_id]
-
-    def create_profile(self, profile: dict[str, Any]) -> dict[str, Any]:
-        self._collection.insert_one(profile)
-        return profile
-
+    def upsert_profile(self, user_id: str, data: dict[str, Any]) -> None:
+        self._collection.update_one(
+            {"userId": user_id},
+            {"$set": {**data, "userId": user_id}},
+            upsert=True
+        )

@@ -10,10 +10,29 @@ from app.services.neo4j_repository import Neo4jSwipeRepository
 from app.services.swipe_repository import MongoNeo4jSwipeRepository, SwipeRepository
 from app.auth.routes import router as auth_router
 from app.auth.admin_routes import router as admin_router
+from app.auth.profile_routes import router as profile_router
+from app.auth.events_routes import router as events_router
+from jose import jwt, JWTError
+
+SECRET_KEY = "TPO_UADE_SECRET_2026"
+ALGORITHM = "HS256"
 
 
-def get_current_user_id(x_user_id: str | None = Header(default=None, alias="X-User-Id")) -> str:
-    return x_user_id or "anonymous"
+def get_current_user_id(authorization: str | None = Header(default=None)) -> str:
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id:
+                return str(user_id)
+        except JWTError:
+            pass
+        # fallback: raw UUID passed as token (legacy)
+        raw = token
+        if len(raw) > 10:
+            return raw
+    return "anonymous"
 
 
 def get_repository(request: Request) -> SwipeRepository:
@@ -53,6 +72,15 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
             return diagnostics()
         return {"repository": "diagnostics not available"}
 
+    @app.on_event("startup")
+    def startup() -> None:
+        try:
+            from app.auth.database import engine
+            from app.auth.models import Base
+            Base.metadata.create_all(bind=engine)
+        except Exception as exc:
+            print(f"[startup] DB init warning: {exc}")
+
     @app.on_event("shutdown")
     def shutdown() -> None:
         close = getattr(app.state.repository, "close", None)
@@ -66,10 +94,7 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
         debug: bool = Query(default=False),
     ) -> FeedResponse:
         try:
-            print(f" DEBUG FRONTEND - User ID recibido: '{user_id}'")
-            print("ENTRO A DISCOVER_FEED")
             profiles = repository.get_feed(user_id=user_id, limit=settings.feed_limit)
-            print("PERFILES:", profiles)
         except RuntimeError as exc:
             if debug:
                 diagnostics = getattr(repository, "diagnostics", None)
@@ -115,17 +140,9 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
 
     app.include_router(auth_router)
     app.include_router(admin_router)
+    app.include_router(profile_router)
+    app.include_router(events_router)
     return app
 
-from fastapi import Header
-
-def get_current_user_id(authorization: str | None = Header(default=None)) -> str:
-    # Si el front envió el header y empieza con "Bearer "
-    if authorization and authorization.startswith("Bearer "):
-        # Le quitamos la palabra "Bearer " y devolvemos solo tu ID
-        return authorization.replace("Bearer ", "")
-
-    # Si llega hasta aquí, es porque el header no llegó
-    return "anonymous"
 
 app = create_app()

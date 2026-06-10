@@ -48,8 +48,8 @@ class Neo4jSwipeRepository:
 
     def list_match_records(self, user_id: str) -> list[dict[str, Any]]:
         query = """
-        MATCH (me:User {userId: $user_id})-[match:MATCHES]-(other:User)
-        RETURN other.userId AS user_id, toString(match.created_at) AS match_created_at
+        MATCH (me:Usuario {id: $user_id})-[match:MATCHES]-(other:Usuario)
+        RETURN other.id AS user_id, toString(match.created_at) AS match_created_at
         ORDER BY match.created_at DESC
         """
         with self._session() as session:

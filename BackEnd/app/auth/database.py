@@ -1,8 +1,10 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = (
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
     "postgresql://admin:password123@localhost:5432/tinderlike_auth"
 )
 
@@ -19,9 +21,7 @@ Base = declarative_base()
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:
         db.close()
-

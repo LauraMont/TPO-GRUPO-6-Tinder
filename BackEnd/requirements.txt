@@ -5,10 +5,10 @@ pymongo>=4.10,<5.0
 pydantic>=2.8,<3.0
 pytest>=8.0,<9.0
 cassandra-driver
-
 sqlalchemy>=2.0
 psycopg2-binary>=2.9
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 email-validator
+redis>=5.0

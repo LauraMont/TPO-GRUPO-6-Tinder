@@ -9,8 +9,8 @@ from app.services.neo4j_repository import Neo4jSwipeRepository
 
 
 class SwipeRepository(Protocol):
-    def get_feed(self, user_id: str, limit: int):
-        return self._profiles.list_profiles(limit=limit)
+    def get_feed(self, user_id: str, limit: int) -> list[dict[str, Any]]:
+        ...
 
     def register_like(self, user_id: str, target_user_id: str) -> dict[str, Any]:
         ...
@@ -41,17 +41,26 @@ class MongoNeo4jSwipeRepository:
             seen_user_ids.add(user_id)
 
             recommended_user_ids = [
-                recommended_user_id
-                for recommended_user_id in self._graph.get_recommended_user_ids(user_id=user_id, limit=limit * 3)
-                if recommended_user_id not in seen_user_ids
+                uid for uid in self._graph.get_recommended_user_ids(user_id=user_id, limit=limit * 3)
+                if uid not in seen_user_ids
             ]
+
+            # Si Neo4j no devuelve recomendaciones por falta de intereses,
+            # mostrar todos los perfiles no vistos
+            if not recommended_user_ids:
+                all_profiles = self._profiles.list_profiles(
+                    exclude_user_ids=seen_user_ids,
+                    limit=limit
+                )
+                return all_profiles
+
         except Neo4jError as exc:
             raise RuntimeError(f"Neo4j failed while building recommendations: {exc}") from exc
 
         try:
             profiles = self._profiles.list_profiles_by_ids(recommended_user_ids)
-            profiles_by_id = {profile["userId"]: profile for profile in profiles if profile.get("userId")}
-            ordered_profiles = [profiles_by_id[user_id] for user_id in recommended_user_ids if user_id in profiles_by_id]
+            profiles_by_id = {p["userId"]: p for p in profiles if p.get("userId")}
+            ordered_profiles = [profiles_by_id[uid] for uid in recommended_user_ids if uid in profiles_by_id]
         except Exception as exc:
             raise RuntimeError(f"MongoDB failed while hydrating recommendations: {exc}") from exc
 
