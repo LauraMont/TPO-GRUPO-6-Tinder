@@ -4,6 +4,7 @@ Seed script – run after docker compose up:
 """
 import os, sys, hashlib
 from pymongo import MongoClient
+from neo4j import GraphDatabase
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
@@ -11,6 +12,9 @@ from sqlalchemy.orm import sessionmaker
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password123@localhost:27018")
 MONGO_DB  = os.getenv("MONGO_DB", "tinderlike")
 PG_URL    = os.getenv("DATABASE_URL", "postgresql://admin:password123@localhost:5432/tinderlike_auth")
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
 
 def sha256(s): return hashlib.sha256(s.encode()).hexdigest()
 
@@ -74,6 +78,9 @@ db = client[MONGO_DB]
 profiles = db["profiles"]
 
 SAMPLE_PROFILES = [
+    {"userId": "1", "name": "Admin UADE", "age": 30, "bio": "Cuenta administradora de prueba.", "interests": ["Tecnologia", "Eventos"], "photos": [], "location": "CABA", "gender": "Otro"},
+    {"userId": "2", "name": "Laura", "age": 23, "bio": "Perfil de prueba de Laura.", "interests": ["Viajes", "Arte"], "photos": [], "location": "CABA", "gender": "Mujer"},
+    {"userId": "3", "name": "Federico", "age": 25, "bio": "Perfil de prueba de Federico.", "interests": ["Tecnologia", "Musica"], "photos": [], "location": "CABA", "gender": "Hombre"},
     {"userId": "user_2", "name": "Valentina", "age": 25, "bio": "Arquitecta. Amante del café y la fotografía urbana.", "interests": ["Fotografía", "Café", "Arquitectura"], "photos": [], "location": "A 3 km de distancia", "gender": "Mujer"},
     {"userId": "user_3", "name": "Sofía", "age": 24, "bio": "Diseñadora gráfica. Viajo siempre que puedo 🌍", "interests": ["Diseño", "Viajes", "Música"], "photos": [], "location": "A 5 km de distancia", "gender": "Mujer"},
     {"userId": "user_4", "name": "Martina", "age": 27, "bio": "Psicóloga. Me encanta el arte contemporáneo.", "interests": ["Arte", "Lectura", "Yoga"], "photos": [], "location": "A 8 km de distancia", "gender": "Mujer"},
@@ -97,6 +104,24 @@ if eventos.count_documents({}) == 0:
 
 client.close()
 print("  ✓ MongoDB ready")
+
+# Demo match in Neo4j. MERGE makes this safe to run more than once.
+print("➤ Neo4j: seeding Admin-Laura demo match…")
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+with driver.session() as session:
+    session.run(
+        """
+        MERGE (admin:Usuario {id: '1'})
+        SET admin.name = 'Admin UADE'
+        MERGE (laura:Usuario {id: '2'})
+        SET laura.name = 'Laura'
+        MERGE (admin)-[:LIKES]->(laura)
+        MERGE (laura)-[:LIKES]->(admin)
+        MERGE (admin)-[:MATCHES]-(laura)
+        """
+    ).consume()
+driver.close()
+print("  ✓ Neo4j ready")
 
 print("\n✅ Seed completado. Usuarios de prueba:")
 print("   admin@uade.edu.ar  / admin123  (ADMIN)")

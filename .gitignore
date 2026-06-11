@@ -1,2 +1,6 @@
 /node_modules
 package-lock.json
+
+# Python generated files
+__pycache__/
+*.py[cod]

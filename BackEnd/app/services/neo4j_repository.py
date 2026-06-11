@@ -56,6 +56,15 @@ class Neo4jSwipeRepository:
             result = session.run(query, user_id=user_id)
             return [record.data() for record in result]
 
+    def are_matched(self, user_id: str, other_user_id: str) -> bool:
+        query = """
+        MATCH (me:Usuario {id: $user_id})-[:MATCHES]-(other:Usuario {id: $other_user_id})
+        RETURN count(other) > 0 AS are_matched
+        """
+        with self._session() as session:
+            record = session.run(query, user_id=user_id, other_user_id=other_user_id).single()
+            return bool(record and record["are_matched"])
+
     def get_recommended_user_ids(self, user_id: str, limit: int) -> list[str]:
         query = """
         MATCH (u:Usuario {id: $user_id})-[:HAS_INTEREST]->(i:Interes)

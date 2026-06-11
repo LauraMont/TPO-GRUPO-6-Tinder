@@ -11,6 +11,6 @@ db.eventos_detalles.createIndex({ "ubicacion.coordinates": "2dsphere" });
 db.eventos_detalles.createIndex({ fecha_hora: 1 });
 
 db.createCollection('messages');
-db.messages.createIndex({ conversation_id: 1, timestamp: -1 });
+db.messages.createIndex({ conversation_id: 1, created_at: -1 });
 
 print('MongoDB collections and indexes created.');

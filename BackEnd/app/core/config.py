@@ -12,6 +12,7 @@ class Settings:
     mongo_uri: str = os.getenv("MONGO_URI", "mongodb://admin:password123@localhost:27018/?authSource=admin")
     mongo_db: str = os.getenv("MONGO_DB", "tinderlike")
     mongo_collection: str = os.getenv("MONGO_COLLECTION", "profiles")
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     feed_limit: int = int(os.getenv("FEED_LIMIT", "20"))
 
 

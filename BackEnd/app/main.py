@@ -12,6 +12,7 @@ from app.auth.routes import router as auth_router
 from app.auth.admin_routes import router as admin_router
 from app.auth.profile_routes import router as profile_router
 from app.auth.events_routes import router as events_router
+from app.chat_routes import router as chat_router
 from jose import jwt, JWTError
 
 SECRET_KEY = "TPO_UADE_SECRET_2026"
@@ -142,6 +143,7 @@ def create_app(repository: SwipeRepository | None = None, settings: Settings | N
     app.include_router(admin_router)
     app.include_router(profile_router)
     app.include_router(events_router)
+    app.include_router(chat_router)
     return app
 
 

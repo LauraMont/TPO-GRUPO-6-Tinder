@@ -21,6 +21,9 @@ class SwipeRepository(Protocol):
     def list_matches(self, user_id: str) -> list[dict[str, Any]]:
         ...
 
+    def are_matched(self, user_id: str, other_user_id: str) -> bool:
+        ...
+
 
 class MongoNeo4jSwipeRepository:
     def __init__(self, profiles: MongoProfileRepository, graph: Neo4jSwipeRepository) -> None:
@@ -107,6 +110,9 @@ class MongoNeo4jSwipeRepository:
             matched_profiles.append({**profile, "match_created_at": record.get("match_created_at")})
         return matched_profiles
 
+    def are_matched(self, user_id: str, other_user_id: str) -> bool:
+        return self._graph.are_matched(user_id, other_user_id)
+
 
 class InMemorySwipeRepository:
     def __init__(self, users: list[dict[str, Any]] | None = None) -> None:
@@ -189,3 +195,6 @@ class InMemorySwipeRepository:
             if other is not None:
                 matches.append({**other, "id": other.get("id") or other.get("userId"), "userId": other.get("userId") or other.get("id")})
         return matches
+
+    def are_matched(self, user_id: str, other_user_id: str) -> bool:
+        return frozenset({user_id, other_user_id}) in self.matches

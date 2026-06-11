@@ -103,9 +103,7 @@ export default function Chats() {
                   <div className="convo-info">
                     <span className="convo-name">{m.name}{m.age ? `, ${m.age}` : ''}</span>
                     <span className="convo-preview">
-                      {localStorage.getItem(`chat_${m.userId || m.id}`)
-                        ? JSON.parse(localStorage.getItem(`chat_${m.userId || m.id}`)).slice(-1)[0]?.text || '¡Es un match! Dile hola 👋'
-                        : '¡Es un match! Dile hola 👋'}
+                      Chat en tiempo real disponible
                     </span>
                   </div>
                   <div className="convo-meta">
