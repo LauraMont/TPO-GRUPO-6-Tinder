@@ -29,7 +29,6 @@ def get_current_user_id(authorization: str | None = Header(default=None)) -> str
                 return str(user_id)
         except JWTError:
             pass
-        # fallback: raw UUID passed as token (legacy)
         raw = token
         if len(raw) > 10:
             return raw
